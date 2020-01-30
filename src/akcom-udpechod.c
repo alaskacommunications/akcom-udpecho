@@ -425,7 +425,12 @@ int my_daemonize(void)
 
    // fork process
    if ((cnf.dont_fork))
+   {
+      snprintf(buff, sizeof(buff), "%i", getpid());
+      write(fd, buff, strlen(buff));
+      close(fd);
       return(s);
+   };
    oldpid = getpid();
    switch(pid = fork())
    {
