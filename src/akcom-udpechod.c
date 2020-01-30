@@ -354,11 +354,13 @@ int my_daemonize(void)
    char                      buff[512];
    pid_t                     pid;
    pid_t                     oldpid;
+   short                     port;
    FILE                    * fs;
    struct stat               sb;
    union
    {
       struct sockaddr         sa;
+      struct sockaddr_in      s4;
       struct sockaddr_in6     s6;
       struct sockaddr_storage ss;
    } sin;
@@ -470,8 +472,27 @@ int my_daemonize(void)
       unlink(cnf.pidfile);
       return(-1);
    };
-   inet_ntop(sin.sa.sa_family, &sin, buff, sizeof(buff));
-   syslog(LOG_INFO, "listening on [%s]:%i", buff, cnf.port);
+   switch(sin.ss.ss_family)
+   {
+      case AF_INET:
+      inet_ntop(sin.sa.sa_family, &sin.s4.sin_addr,  buff, sizeof(buff));
+      port = ntohs(sin.s4.sin_port);
+      break;
+
+      case AF_INET6:
+      inet_ntop(sin.sa.sa_family, &sin.s6.sin6_addr, buff, sizeof(buff));
+      port = ntohs(sin.s6.sin6_port);
+      break;
+
+      default:
+      syslog(LOG_ERR, "listening socket has invalid address family: %i\n", sin.sa.sa_family);
+      close(s);
+      close(fd);
+      unlink(cnf.pidfile);
+      return(-1);
+      break;
+   };
+   syslog(LOG_INFO, "listening on [%s]:%hu", buff, port);
 
    // fork process
    if ((cnf.dont_fork))
@@ -535,7 +556,7 @@ int my_loop(int s, size_t * connp)
    union
    {
       char                    bytes[MY_BUFF_SIZE];
-      struct udp_echo_plus *  msg;
+      struct udp_echo_plus    msg;
    } udpbuff;
 
    // setup poller
@@ -566,13 +587,13 @@ int my_loop(int s, size_t * connp)
    {
       case AF_INET:
       syslog(LOG_DEBUG, "conn %zu: processing client IPv4 address", *connp);
-      inet_ntop(AF_INET, &sin.s4, addr_str, sizeof(addr_str));
+      inet_ntop(AF_INET, &sin.s4.sin_addr, addr_str, sizeof(addr_str));
       port = ntohs(sin.s4.sin_port);
       break;
 
       case AF_INET6:
       syslog(LOG_DEBUG, "conn %zu: processing client IPv6 address", *connp);
-      inet_ntop(AF_INET6, &sin.s6, addr_str, sizeof(addr_str));
+      inet_ntop(AF_INET6, &sin.s6.sin6_addr, addr_str, sizeof(addr_str));
       port = ntohs(sin.s6.sin6_port);
       break;
 
@@ -585,18 +606,18 @@ int my_loop(int s, size_t * connp)
    if ((cnf.echoplus))
    {
       syslog(LOG_DEBUG, "conn %zu: intializing echo plus header", *connp);
-      udpbuff.msg->res_sn    = udpbuff.msg->req_sn;
-      udpbuff.msg->recv_time = htonl(ms & 0xFFFFFFFFLL);
-      udpbuff.msg->failures  = 0;
+      udpbuff.msg.res_sn    = udpbuff.msg.req_sn;
+      udpbuff.msg.recv_time = htonl(ms & 0xFFFFFFFFLL);
+      udpbuff.msg.failures  = 0;
    };
    syslog(LOG_INFO,
-          "client: [%s]:%i; recv bytes: %zi; timestamp: %lu.%09lu; seq: %u;",
+          "client: [%s]:%hu; recv bytes: %zi; timestamp: %lu.%09lu; seq: %u;",
           addr_str,
           port,
           ssize,
           ts.tv_sec,
           ts.tv_nsec,
-          (((cnf.echoplus)) ? ntohl(udpbuff.msg->req_sn) : 0)
+          (((cnf.echoplus)) ? ntohl(udpbuff.msg.req_sn) : 0)
           );
 
    // randomly drop packets
@@ -604,7 +625,7 @@ int my_loop(int s, size_t * connp)
    {
       if ( (rand() % 100) < cnf.drop_perct)
       {
-         syslog(LOG_INFO, "client: [%s]:%i; dropping echo request", addr_str, port);
+         syslog(LOG_INFO, "client: [%s]:%hu; dropping echo request", addr_str, port);
          return(0);
       };
    };
@@ -629,17 +650,17 @@ int my_loop(int s, size_t * connp)
    if ((cnf.echoplus))
    {
       syslog(LOG_DEBUG, "conn %zu: updating echo plus header", *connp);
-      udpbuff.msg->reply_time = htonl(ms & 0xFFFFFFFFLL);
+      udpbuff.msg.reply_time = htonl(ms & 0xFFFFFFFFLL);
    };
    sendto(s, udpbuff.bytes, ssize, 0, &sin.sa, sinlen);
    syslog(LOG_INFO,
-          "client: [%s]:%i; sent bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
+          "client: [%s]:%hu; sent bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
           addr_str,
           port,
           ssize,
           ts.tv_sec,
           ts.tv_nsec,
-          (((cnf.echoplus)) ? ntohl(udpbuff.msg->req_sn) : 0),
+          (((cnf.echoplus)) ? ntohl(udpbuff.msg.req_sn) : 0),
           delay
           );
 
