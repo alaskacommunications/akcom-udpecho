@@ -521,7 +521,7 @@ int my_loop(int s)
       udpbuff.msg->failures  = 0;
    };
    syslog(LOG_INFO,
-          "client: [%s]:%i; bytes: %zi; timestamp: %lu.%09lu; seq: %u;",
+          "client: [%s]:%i; recv bytes: %zi; timestamp: %lu.%09lu; seq: %u;",
           addr_str,
           port,
           ssize,
@@ -559,7 +559,7 @@ int my_loop(int s)
       udpbuff.msg->reply_time = htonl(ms & 0xFFFFFFFFLL);
    sendto(s, udpbuff.bytes, ssize, 0, &sin.sa, sinlen);
    syslog(LOG_INFO,
-          "client: [%s]:%i; bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
+          "client: [%s]:%i; sent bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
           addr_str,
           port,
           ssize,
