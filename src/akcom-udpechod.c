@@ -294,12 +294,14 @@ int main(int argc, char * argv[])
    syslog(LOG_NOTICE, "daemon starting");
 
    // configure signals
+   syslog(LOG_DEBUG, "configuring signal handling");
    signal(SIGPIPE, SIG_IGN);
    signal(SIGINT,  my_sighandler);
    signal(SIGQUIT, my_sighandler);
    signal(SIGTERM, my_sighandler);
 
    // seed psuedo random number generator
+   syslog(LOG_DEBUG, "seeding psuedo random number generator");
    clock_gettime(CLOCK_REALTIME, &ts);
    seed  = (int)ts.tv_sec;
    seed += (int)ts.tv_nsec;
@@ -358,6 +360,7 @@ int my_daemonize(void)
    } sin;
 
    // create lock file
+   syslog(LOG_DEBUG, "creating PID file");
    strncpy(pidfile, cnf.pidfile, sizeof(pidfile)-7);
    strcat(pidfile, "XXXXXX");
    if ((fd = mkstemp(pidfile)) == -1)
@@ -365,6 +368,7 @@ int my_daemonize(void)
       syslog(LOG_ERR, "error: mkstemp(): %s", strerror(errno));
       return(-1);
    };
+   syslog(LOG_DEBUG, "temp pidfile: %s", pidfile);
    if ((rc = link(pidfile, cnf.pidfile)) == -1)
    {
       syslog(LOG_ERR, "error: mkstemp(): %s", strerror(errno));
@@ -376,6 +380,7 @@ int my_daemonize(void)
    syslog(LOG_DEBUG, "pidfile: %s", cnf.pidfile);
 
    // creates socket
+   syslog(LOG_DEBUG, "creating UDP socket");
    if ((s = socket(PF_INET6, SOCK_DGRAM, 0)) == -1)
    {
       syslog(LOG_ERR, "socket error: %s", strerror(errno));
@@ -385,6 +390,7 @@ int my_daemonize(void)
    };
 
    // set socket options
+   syslog(LOG_DEBUG, "setting socket options");
    opt = 1;
    if ((rc = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(int))) == -1)
    {
@@ -396,6 +402,7 @@ int my_daemonize(void)
    };
 
    // bind socket to interface
+   syslog(LOG_DEBUG, "binding socket");
    bzero(&sin, sizeof(sin));
    sin.s6.sin6_family = AF_INET6;
    sin.s6.sin6_addr   = in6addr_any;
@@ -426,11 +433,13 @@ int my_daemonize(void)
    // fork process
    if ((cnf.dont_fork))
    {
+      syslog(LOG_DEBUG, "writing PID to pidfile");
       snprintf(buff, sizeof(buff), "%i", getpid());
       write(fd, buff, strlen(buff));
       close(fd);
       return(s);
    };
+   syslog(LOG_DEBUG, "forking process");
    oldpid = getpid();
    switch(pid = fork())
    {
@@ -446,12 +455,14 @@ int my_daemonize(void)
 
       default:
       syslog(LOG_INFO, "forking to %i", pid);
+      closelog();
       close(fd);
       close(s);
       return(0);
    };
 
    // record PID in pidfile
+   syslog(LOG_DEBUG, "writing forked PID to pidfile");
    snprintf(buff, sizeof(buff), "%i", pid);
    write(fd, buff, strlen(buff));
    close(fd);
@@ -485,6 +496,7 @@ int my_loop(int s, size_t * connp)
    } udpbuff;
 
    // setup poller
+   syslog(LOG_DEBUG, "waiting for echo request");
    fds[0].fd      = s;
    fds[0].events  = POLLIN;
    fds[0].revents = 0;
@@ -495,11 +507,13 @@ int my_loop(int s, size_t * connp)
    (*connp)++;
 
    // read data
+   syslog(LOG_DEBUG, "conn %zu: reading data", *connp);
    sinlen = sizeof(struct sockaddr_storage);
    if ((ssize = recvfrom(s, udpbuff.bytes, sizeof(udpbuff), 0, &sin.sa, &sinlen)) == -1)
       return(-1);
 
    // grab timestamp
+   syslog(LOG_DEBUG, "conn %zu: calculating recv timestamp", *connp);
    clock_gettime(CLOCK_REALTIME, &ts);
    ms  = (uint64_t)(ts.tv_sec * 1000000000);
    ms += (uint64_t)ts.tv_nsec;
@@ -508,22 +522,26 @@ int my_loop(int s, size_t * connp)
    switch(sin.ss.ss_family)
    {
       case AF_INET:
+      syslog(LOG_DEBUG, "conn %zu: processing client IPv4 address", *connp);
       inet_ntop(AF_INET, &sin.s4, addr_str, sizeof(addr_str));
       port = ntohs(sin.s4.sin_port);
       break;
 
       case AF_INET6:
+      syslog(LOG_DEBUG, "conn %zu: processing client IPv6 address", *connp);
       inet_ntop(AF_INET6, &sin.s6, addr_str, sizeof(addr_str));
       port = ntohs(sin.s6.sin6_port);
       break;
 
       default:
+      syslog(LOG_DEBUG, "conn %zu: ignoring unknown address family: %i", *connp, sin.ss.ss_family);
       return(0);
    };
 
    // process echo+ packet
    if ((cnf.echoplus))
    {
+      syslog(LOG_DEBUG, "conn %zu: intializing echo plus header", *connp);
       udpbuff.msg->res_sn    = udpbuff.msg->req_sn;
       udpbuff.msg->recv_time = htonl(ms & 0xFFFFFFFFLL);
       udpbuff.msg->failures  = 0;
@@ -553,10 +571,12 @@ int my_loop(int s, size_t * connp)
    if (cnf.delay > 0)
    {
       delay = rand() % cnf.delay;
+      syslog(LOG_DEBUG, "conn %zu: delaying response for %i ms", *connp, delay);
       usleep(delay);
    };
 
    // grab timestamp
+   syslog(LOG_DEBUG, "conn %zu: calculating sent timestamp", *connp);
    clock_gettime(CLOCK_REALTIME, &ts);
    ts.tv_nsec++;
    ms  = (uint64_t)(ts.tv_sec * 1000000000);
@@ -564,7 +584,10 @@ int my_loop(int s, size_t * connp)
 
    // send response
    if ((cnf.echoplus))
+   {
+      syslog(LOG_DEBUG, "conn %zu: updating echo plus header", *connp);
       udpbuff.msg->reply_time = htonl(ms & 0xFFFFFFFFLL);
+   };
    sendto(s, udpbuff.bytes, ssize, 0, &sin.sa, sinlen);
    syslog(LOG_INFO,
           "client: [%s]:%i; sent bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
