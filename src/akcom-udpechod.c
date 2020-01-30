@@ -292,7 +292,7 @@ int main(int argc, char * argv[])
    if ((cnf.verbose))
       opts |= LOG_PERROR;
    openlog(cnf.prog_name, opts, cnf.facility);
-   syslog(LOG_NOTICE, "daemon starting");
+   syslog(LOG_NOTICE, "%s v%s starting", PROGRAM_NAME, PACKAGE_VERSION);
 
    // configure signals
    syslog(LOG_DEBUG, "configuring signal handling");
