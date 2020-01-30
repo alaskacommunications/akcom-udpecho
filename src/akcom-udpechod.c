@@ -383,14 +383,6 @@ int my_daemonize(void)
       unlink(cnf.pidfile);
       return(-1);
    };
-   if ((s = socket(PF_INET6, SOCK_DGRAM, 0)) == -1)
-   {
-      syslog(LOG_ERR, "error: socket(): %s", strerror(errno));
-      close(s);
-      close(fd);
-      unlink(cnf.pidfile);
-      return(-1);
-   };
 
    // set socket options
    opt = 1;
