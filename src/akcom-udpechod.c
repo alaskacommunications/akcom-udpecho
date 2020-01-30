@@ -67,6 +67,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -295,6 +296,7 @@ int main(int argc, char * argv[])
 
    // configure signals
    syslog(LOG_DEBUG, "configuring signal handling");
+   signal(SIGHUP,  SIG_IGN);
    signal(SIGPIPE, SIG_IGN);
    signal(SIGINT,  my_sighandler);
    signal(SIGQUIT, my_sighandler);
@@ -352,6 +354,8 @@ int my_daemonize(void)
    char                      buff[512];
    pid_t                     pid;
    pid_t                     oldpid;
+   FILE                    * fs;
+   struct stat               sb;
    union
    {
       struct sockaddr         sa;
@@ -359,7 +363,46 @@ int my_daemonize(void)
       struct sockaddr_storage ss;
    } sin;
 
-   // create lock file
+   // check for existing instance
+   fs = NULL;
+   syslog(LOG_DEBUG, "checking for existing PID file");
+   if ((rc = stat(cnf.pidfile, &sb)) == -1)
+   {
+      if (errno != ENOENT)
+      {
+         syslog(LOG_ERR, "error: stat(): %s", strerror(errno));
+         return(-1);
+      };
+   } else if ((fs = fopen(cnf.pidfile, "r")) == NULL)
+   {
+      if (errno != ENOENT)
+      {
+         syslog(LOG_ERR, "error: fopen(): %s", strerror(errno));
+         return(-1);
+      };
+   } else
+   {
+      fscanf(fs, "%u", &pid);
+      fclose(fs);
+      if ((rc = kill(pid, 0)) == -1)
+      {
+         if (errno == ESRCH)
+         {
+            syslog(LOG_DEBUG, "removing stale PID file");
+            unlink(cnf.pidfile);
+         } else
+         {
+            syslog(LOG_ERR, "error: kill(): %s", strerror(errno));
+            return(-1);
+         };
+      } else
+      {
+         syslog(LOG_ERR, "daemon already running");
+         return(-1);
+      };
+   };
+
+   // create PID file
    syslog(LOG_DEBUG, "creating PID file");
    strncpy(pidfile, cnf.pidfile, sizeof(pidfile)-7);
    strcat(pidfile, "XXXXXX");
