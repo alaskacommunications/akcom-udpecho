@@ -488,7 +488,7 @@ int my_loop(int s, size_t * connp)
    fds[0].fd      = s;
    fds[0].events  = POLLIN;
    fds[0].revents = 0;
-   if ((poll(fds, 1, 1)) < 1)
+   if ((poll(fds, 1, 5000)) < 1)
       return(0);
 
    // increment connection counter
