@@ -192,6 +192,8 @@ int main(int argc, char * argv[])
    int                       c;
    int                       opts;
    int                       s;
+   unsigned                  seed;
+   struct timespec           ts;
 
    // determines program name
    cnf.prog_name = argv[0];
@@ -281,6 +283,14 @@ int main(int argc, char * argv[])
    signal(SIGINT,  my_sighandler);
    signal(SIGQUIT, my_sighandler);
    signal(SIGTERM, my_sighandler);
+
+   // seed psuedo random number generator
+   clock_gettime(CLOCK_REALTIME, &ts);
+   seed  = (int)ts.tv_sec;
+   seed += (int)ts.tv_nsec;
+   seed += (int)getpid();
+   seed += (int)getppid();
+   srand(seed);
 
    // open syslog
    opts = LOG_PID;
