@@ -535,7 +535,7 @@ int my_loop(int s)
    {
       if ( (rand() % 100) < cnf.drop_perct)
       {
-         syslog(LOG_INFO, "dropping echo request");
+         syslog(LOG_INFO, "client: [%s]:%i; dropping echo request", addr_str, port);
          return(0);
       };
    };
