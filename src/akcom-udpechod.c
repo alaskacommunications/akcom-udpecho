@@ -285,6 +285,13 @@ int main(int argc, char * argv[])
       };
    };
 
+   // open syslog
+   opts = LOG_PID;
+   if ((cnf.verbose))
+      opts |= LOG_PERROR;
+   openlog(cnf.prog_name, opts, cnf.facility);
+   syslog(LOG_NOTICE, "daemon starting");
+
    // configure signals
    signal(SIGPIPE, SIG_IGN);
    signal(SIGINT,  my_sighandler);
@@ -298,14 +305,6 @@ int main(int argc, char * argv[])
    seed += (int)getpid();
    seed += (int)getppid();
    srand(seed);
-
-   // open syslog
-   opts = LOG_PID;
-   if ((cnf.verbose))
-      opts |= LOG_PERROR;
-   openlog(cnf.prog_name, opts, cnf.facility);
-   syslog(LOG_NOTICE, "daemon starting");
-
 
    // starts daemon functions
    switch(s = my_daemonize())
