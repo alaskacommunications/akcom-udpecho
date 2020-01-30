@@ -1,0 +1,10 @@
+*~
+*.lo
+*.o
+*.swp
+.DS_Store
+.deps
+.dirstamp
+a.out
+/src/akcom-udpecho
+/src/akcom-udpechod
