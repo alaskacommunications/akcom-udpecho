@@ -220,6 +220,10 @@ int main(int argc, char * argv[])
          };
          break;
 
+         case 'D':
+         cnf.delay = atol(optarg);
+         break;
+
          case 'e':
          cnf.echoplus = 1;
          break;
@@ -360,10 +364,10 @@ int my_daemonize(void)
    union
    {
       struct sockaddr         sa;
-      struct sockaddr_in      s4;
-      struct sockaddr_in6     s6;
+      struct sockaddr_in      sin;
+      struct sockaddr_in6     sin6;
       struct sockaddr_storage ss;
-   } sin;
+   } sa;
 
    // check for existing instance
    fs = NULL;
@@ -448,12 +452,12 @@ int my_daemonize(void)
 
    // bind socket to interface
    syslog(LOG_DEBUG, "binding socket");
-   bzero(&sin, sizeof(sin));
-   sin.s6.sin6_family = AF_INET6;
-   sin.s6.sin6_addr   = in6addr_any;
-   sin.s6.sin6_port   = htons(cnf.port);
-   socklen            = sizeof(struct sockaddr_in6);
-   if ((rc = bind(s, (struct sockaddr *)&sin, socklen)) == -1)
+   bzero(&sa, sizeof(sa));
+   sa.sin6.sin6_family = AF_INET6;
+   sa.sin6.sin6_addr   = in6addr_any;
+   sa.sin6.sin6_port   = htons(cnf.port);
+   socklen             = sizeof(struct sockaddr_in6);
+   if ((rc = bind(s, &sa.sa, socklen)) == -1)
    {
       syslog(LOG_ERR, "error: bind(): %s", strerror(errno));
       close(s);
@@ -464,7 +468,7 @@ int my_daemonize(void)
 
    // log socket address
    socklen = sizeof(struct sockaddr_in6);
-   if ((rc = getsockname(s, &sin.sa, &socklen)) == -1)
+   if ((rc = getsockname(s, &sa.sa, &socklen)) == -1)
    {
       syslog(LOG_ERR, "error: getsockname(): %s", strerror(errno));
       close(s);
@@ -472,20 +476,20 @@ int my_daemonize(void)
       unlink(cnf.pidfile);
       return(-1);
    };
-   switch(sin.ss.ss_family)
+   switch(sa.ss.ss_family)
    {
       case AF_INET:
-      inet_ntop(sin.sa.sa_family, &sin.s4.sin_addr,  buff, sizeof(buff));
-      port = ntohs(sin.s4.sin_port);
+      inet_ntop(sa.sin.sin_family, &sa.sin.sin_addr,  buff, sizeof(buff));
+      port = ntohs(sa.sin.sin_port);
       break;
 
       case AF_INET6:
-      inet_ntop(sin.sa.sa_family, &sin.s6.sin6_addr, buff, sizeof(buff));
-      port = ntohs(sin.s6.sin6_port);
+      inet_ntop(sa.sin6.sin6_family, &sa.sin6.sin6_addr, buff, sizeof(buff));
+      port = ntohs(sa.sin6.sin6_port);
       break;
 
       default:
-      syslog(LOG_ERR, "listening socket has invalid address family: %i\n", sin.sa.sa_family);
+      syslog(LOG_ERR, "listening socket has invalid address family: %i\n", sa.sa.sa_family);
       close(s);
       close(fd);
       unlink(cnf.pidfile);
@@ -549,10 +553,10 @@ int my_loop(int s, size_t * connp)
    union
    {
       struct sockaddr         sa;
-      struct sockaddr_in      s4;
-      struct sockaddr_in6     s6;
+      struct sockaddr_in      sin;
+      struct sockaddr_in6     sin6;
       struct sockaddr_storage ss;
-   } sin;
+   } sa;
    union
    {
       char                    bytes[MY_BUFF_SIZE];
@@ -560,11 +564,10 @@ int my_loop(int s, size_t * connp)
    } udpbuff;
 
    // setup poller
-   syslog(LOG_DEBUG, "waiting for echo request");
    fds[0].fd      = s;
    fds[0].events  = POLLIN;
    fds[0].revents = 0;
-   if ((poll(fds, 1, 5000)) < 1)
+   if ((poll(fds, 1, 30000)) < 1)
       return(0);
 
    // increment connection counter
@@ -573,7 +576,7 @@ int my_loop(int s, size_t * connp)
    // read data
    syslog(LOG_DEBUG, "conn %zu: reading data", *connp);
    sinlen = sizeof(struct sockaddr_storage);
-   if ((ssize = recvfrom(s, udpbuff.bytes, sizeof(udpbuff), 0, &sin.sa, &sinlen)) == -1)
+   if ((ssize = recvfrom(s, udpbuff.bytes, sizeof(udpbuff), 0, &sa.sa, &sinlen)) == -1)
       return(-1);
 
    // grab timestamp
@@ -583,22 +586,22 @@ int my_loop(int s, size_t * connp)
    ms += (uint64_t)ts.tv_nsec;
 
    // parse UDP source address
-   switch(sin.ss.ss_family)
+   switch(sa.ss.ss_family)
    {
       case AF_INET:
       syslog(LOG_DEBUG, "conn %zu: processing client IPv4 address", *connp);
-      inet_ntop(AF_INET, &sin.s4.sin_addr, addr_str, sizeof(addr_str));
-      port = ntohs(sin.s4.sin_port);
+      inet_ntop(AF_INET, &sa.sin.sin_addr, addr_str, sizeof(addr_str));
+      port = ntohs(sa.sin.sin_port);
       break;
 
       case AF_INET6:
       syslog(LOG_DEBUG, "conn %zu: processing client IPv6 address", *connp);
-      inet_ntop(AF_INET6, &sin.s6.sin6_addr, addr_str, sizeof(addr_str));
-      port = ntohs(sin.s6.sin6_port);
+      inet_ntop(AF_INET6, &sa.sin6.sin6_addr, addr_str, sizeof(addr_str));
+      port = ntohs(sa.sin6.sin6_port);
       break;
 
       default:
-      syslog(LOG_DEBUG, "conn %zu: ignoring unknown address family: %i", *connp, sin.ss.ss_family);
+      syslog(LOG_DEBUG, "conn %zu: ignoring unknown address family: %i", *connp, sa.ss.ss_family);
       return(0);
    };
 
@@ -611,7 +614,8 @@ int my_loop(int s, size_t * connp)
       udpbuff.msg.failures  = 0;
    };
    syslog(LOG_INFO,
-          "client: [%s]:%hu; recv bytes: %zi; timestamp: %lu.%09lu; seq: %u;",
+          "conn %zu: client: [%s]:%hu; recv bytes: %zi; timestamp: %lu.%09lu; seq: %u;",
+          *connp,
           addr_str,
           port,
           ssize,
@@ -625,7 +629,7 @@ int my_loop(int s, size_t * connp)
    {
       if ( (rand() % 100) < cnf.drop_perct)
       {
-         syslog(LOG_INFO, "client: [%s]:%hu; dropping echo request", addr_str, port);
+         syslog(LOG_INFO, "conn %zu: client: [%s]:%hu; dropping echo request", *connp, addr_str, port);
          return(0);
       };
    };
@@ -652,9 +656,10 @@ int my_loop(int s, size_t * connp)
       syslog(LOG_DEBUG, "conn %zu: updating echo plus header", *connp);
       udpbuff.msg.reply_time = htonl(ms & 0xFFFFFFFFLL);
    };
-   sendto(s, udpbuff.bytes, ssize, 0, &sin.sa, sinlen);
+   sendto(s, udpbuff.bytes, ssize, 0, &sa.sa, sinlen);
    syslog(LOG_INFO,
-          "client: [%s]:%hu; sent bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
+          "conn %zu: client: [%s]:%hu; sent bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
+          *connp,
           addr_str,
           port,
           ssize,
