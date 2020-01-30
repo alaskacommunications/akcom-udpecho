@@ -31,61 +31,7 @@
 #
 
 
-include GNUmakefile.version
-
-
-GIT_VERSION				= $(shell git describe --long 2>/dev/null|sed -e s/-/./g -e s/^v//g)
-ifeq ($(GIT_VERSION),) 
-   PACKAGE_VERSION			= $(VERSION)
-else
-   PACKAGE_VERSION			= $(GIT_VERSION)
-endif
-
-
-CFLAGS					= -Wall -Wno-unknown-pragmas -DPACKAGE_VERSION='"$(PACKAGE_VERSION)"'
-LIBTOOL					?= libtool
-INSTALL					?= install
-PREFIX					?= /usr/local
-INSTALL_OPTS				?= --strip -D
-
-
-PROGS					= src/akcom-udpecho \
-					  src/akcom-udpechod
-OBJS					= src/akcom-udpecho.lo \
-					  src/akcom-udpechod.lo
-
-
-.PHONY: all install clean uninstall
-
-
-all: $(PROGS)
-
-
-src/akcom-udpecho.lo: src/akcom-udpecho.c
-	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c src/akcom-udpecho.c
-
-
-src/akcom-udpechod.lo: src/akcom-udpechod.c
-	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c src/akcom-udpechod.c
-
-
-$(PROGS): $(OBJS)
-	$(LIBTOOL) --mode=link --tag=CC gcc $(CFLAGS) -o $(@) $(@).lo
-
-
-install: $(PROGS)
-	$(INSTALL) $(INSTALL_OPTS) src/akcom-udpecho  $(DESTDIR)$(PREFIX)/bin/akcom-udpecho
-	$(INSTALL) $(INSTALL_OPTS) src/akcom-udpechod $(DESTDIR)$(PREFIX)/sbin/akcom-udpechod
-
-
-uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/akcom-udpecho
-	rm -f $(DESTDIR)$(PREFIX)/sbin/akcom-udpechod
-
-
-clean:
-	$(LIBTOOL) --mode=clean rm -f $(OBJS)
-	$(LIBTOOL) --mode=clean rm -f $(PROGS)
+VERSION					:= 0.0
 
 
 # end of Makefile
