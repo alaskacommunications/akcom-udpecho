@@ -365,7 +365,7 @@ int my_daemonize(void)
 
    // check for existing instance
    fs = NULL;
-   syslog(LOG_DEBUG, "checking for existing PID file");
+   syslog(LOG_DEBUG, "checking for existing PID file (%s)", cnf.pidfile);
    if ((rc = stat(cnf.pidfile, &sb)) == -1)
    {
       if (errno != ENOENT)
