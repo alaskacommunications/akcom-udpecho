@@ -227,7 +227,10 @@ int main(int argc, char * argv[])
          break;
 
          case 'f':
-         if      (!(strcasecmp(optarg, "daemon"))) { cnf.facility = LOG_DAEMON; }
+         if      (!(strcasecmp(optarg, "auth")))   { cnf.facility = LOG_AUTH; }
+         else if (!(strcasecmp(optarg, "cron")))   { cnf.facility = LOG_CRON; }
+         else if (!(strcasecmp(optarg, "daemon"))) { cnf.facility = LOG_DAEMON; }
+         else if (!(strcasecmp(optarg, "ftp")))    { cnf.facility = LOG_FTP; }
          else if (!(strcasecmp(optarg, "local0"))) { cnf.facility = LOG_LOCAL0; }
          else if (!(strcasecmp(optarg, "local1"))) { cnf.facility = LOG_LOCAL1; }
          else if (!(strcasecmp(optarg, "local2"))) { cnf.facility = LOG_LOCAL2; }
@@ -236,6 +239,10 @@ int main(int argc, char * argv[])
          else if (!(strcasecmp(optarg, "local5"))) { cnf.facility = LOG_LOCAL5; }
          else if (!(strcasecmp(optarg, "local6"))) { cnf.facility = LOG_LOCAL6; }
          else if (!(strcasecmp(optarg, "local7"))) { cnf.facility = LOG_LOCAL7; }
+         else if (!(strcasecmp(optarg, "lpr")))    { cnf.facility = LOG_LPR; }
+         else if (!(strcasecmp(optarg, "mail")))   { cnf.facility = LOG_MAIL; }
+         else if (!(strcasecmp(optarg, "news")))   { cnf.facility = LOG_NEWS; }
+         else if (!(strcasecmp(optarg, "uucp")))   { cnf.facility = LOG_UUCP; }
          else if (!(strcasecmp(optarg, "user")))   { cnf.facility = LOG_USER; }
          else
          {
