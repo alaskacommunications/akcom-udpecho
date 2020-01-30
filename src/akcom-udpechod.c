@@ -550,6 +550,7 @@ int my_loop(int s)
 
    // grab timestamp
    clock_gettime(CLOCK_REALTIME, &ts);
+   ts.tv_nsec++;
    ms  = (uint64_t)(ts.tv_sec * 1000000000);
    ms += (uint64_t)ts.tv_nsec;
 
