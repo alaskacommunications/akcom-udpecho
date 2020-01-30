@@ -166,7 +166,7 @@ int main(int argc, char * argv[]);
 int my_daemonize(void);
 
 // main loop
-int my_loop(int s);
+int my_loop(int s, size_t * connp);
 
 // signal handler
 void my_sighandler(int signum);
@@ -194,6 +194,7 @@ int main(int argc, char * argv[])
    int                       s;
    unsigned                  seed;
    struct timespec           ts;
+   size_t                    conn;
 
    // determines program name
    cnf.prog_name = argv[0];
@@ -323,8 +324,9 @@ int main(int argc, char * argv[])
    };
 
    // loops
+   conn = 0;
    while(!(should_stop))
-      my_loop(s);
+      my_loop(s, &conn);
 
    // close syslog
    syslog(LOG_NOTICE, "daemon stopping");
@@ -462,7 +464,7 @@ int my_daemonize(void)
 
 
 // main loop
-int my_loop(int s)
+int my_loop(int s, size_t * connp)
 {
    socklen_t                  sinlen;
    ssize_t                    ssize;
@@ -491,6 +493,9 @@ int my_loop(int s)
    fds[0].revents = 0;
    if ((poll(fds, 1, 1)) < 1)
       return(0);
+
+   // increment connection counter
+   (*connp)++;
 
    // read data
    sinlen = sizeof(struct sockaddr_storage);
