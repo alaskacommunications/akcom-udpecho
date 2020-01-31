@@ -214,6 +214,24 @@ int main(int argc, char * argv[])
    unsigned                  seed;
    struct timespec           ts;
    size_t                    conn;
+   int                       opt_index;
+
+   // getopt options
+   static char   short_opt[] = "d:D:ehnp:P:rvV";
+   static struct option long_opt[] =
+   {
+      {"drop",          required_argument, 0, 'd'},
+      {"delay",         required_argument, 0, 'D'},
+      {"echoplus",      no_argument,       0, 'e'},
+      {"help",          no_argument,       0, 'h'},
+      {"foreground",    no_argument,       0, 'n'},
+      {"port",          required_argument, 0, 'p'},
+      {"pidfile",       required_argument, 0, 'P'},
+      {"rfc",           no_argument,       0, 'r'},
+      {"verbose",       no_argument,       0, 'v'},
+      {"version",       no_argument,       0, 'V'},
+      {NULL,            0,                 0, 0  }
+   };
 
    // determines program name
    cnf.prog_name = argv[0];
@@ -221,7 +239,8 @@ int main(int argc, char * argv[])
       cnf.prog_name = &ptr[1];
 
    // process arguments
-   while ((c = getopt(argc, argv, "d:D:eEhnp:P:vV")) != -1)
+   //while ((c = getopt(argc, argv, "d:D:eEhnp:P:vV")) != -1)
+   while((c = getopt_long(argc, argv, short_opt, long_opt, &opt_index)) != -1)
    {
       switch(c)
       {
@@ -244,10 +263,6 @@ int main(int argc, char * argv[])
 
          case 'e':
          cnf.echoplus = 1;
-         break;
-
-         case 'E':
-         cnf.echoplus = 0;
          break;
 
          case 'f':
@@ -289,6 +304,10 @@ int main(int argc, char * argv[])
 
          case 'P':
          cnf.pidfile = optarg;
+         break;
+
+         case 'r':
+         cnf.echoplus = 0;
          break;
 
          case 'v':
@@ -743,16 +762,16 @@ void my_usage(void)
 
    printf("Usage: %s [options]\n", cnf.prog_name);
    printf("OPTIONS:\n");
-   printf("  -d percent                set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
-   printf("  -D microseconds           set echo delay range to microseconds (default: %u)\n", cnf.delay);
-   printf("  -e                        enable echo plus, not RFC compliant%s\n", ((cnf.echoplus)) ? " (default)" : "");
-   printf("  -E                        RFC compliant echo protocol%s\n", (!(cnf.echoplus)) ? " (default)" : "");
-   printf("  -h                        display this message and exit\n");
-   printf("  -n                        do not fork\n");
-   printf("  -p port                   list on port number (default: %u)\n", cnf.port);
-   printf("  -P file                   PID file (default: %s)\n", cnf.pidfile);
-   printf("  -v                        enable verbose output\n");
-   printf("  -V                        display version and exit\n");
+   printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
+   printf("  -D ms,   --delay=ms       set echo delay range to microseconds (default: %u)\n", cnf.delay);
+   printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf.echoplus)) ? " (default)" : "");
+   printf("  -h,      --help           print this help and exit\n");
+   printf("  -n,      --foreground     do not fork\n");
+   printf("  -p port, --port=port      list on port number (default: %u)\n", cnf.port);
+   printf("  -P file, --pidfile=file   PID file (default: %s)\n", cnf.pidfile);
+   printf("  -r,      --rfc            RFC compliant echo protocol%s\n", (!(cnf.echoplus)) ? " (default)" : "");
+   printf("  -v,      --verbose        enable verbose output\n");
+   printf("  -V,      --version        print version number and exit\n");
    printf("\n");
    return;
 }
