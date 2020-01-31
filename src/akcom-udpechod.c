@@ -315,6 +315,9 @@ int main(int argc, char * argv[])
       opts |= LOG_PERROR;
    openlog(cnf.prog_name, opts, cnf.facility);
    syslog(LOG_NOTICE, "%s v%s starting", PROGRAM_NAME, PACKAGE_VERSION);
+   syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf.echoplus)) ? "yes" : "no");
+   syslog(LOG_NOTICE, "random delay: %u ms", cnf.delay);
+   syslog(LOG_NOTICE, "drop probability: %u%%", cnf.drop_perct);
 
    // configure signals
    syslog(LOG_DEBUG, "configuring signal handling");
@@ -740,14 +743,14 @@ void my_usage(void)
 
    printf("Usage: %s [options]\n", cnf.prog_name);
    printf("OPTIONS:\n");
-   printf("  -d percent                set packet drop probability percentage\n");
-   printf("  -D microseconds           set echo delay range to microseconds\n");
-   printf("  -e                        enable echo plus\n");
-   printf("  -E                        disable echo plus\n");
+   printf("  -d percent                set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
+   printf("  -D microseconds           set echo delay range to microseconds (default: %u)\n", cnf.delay);
+   printf("  -e                        enable echo plus, not RFC compliant%s\n", ((cnf.echoplus)) ? " (default)" : "");
+   printf("  -E                        RFC compliant echo protocol%s\n", (!(cnf.echoplus)) ? " (default)" : "");
    printf("  -h                        display this message and exit\n");
    printf("  -n                        do not fork\n");
-   printf("  -p port                   list on port number\n");
-   printf("  -P file                   PID file\n");
+   printf("  -p port                   list on port number (default: %u)\n", cnf.port);
+   printf("  -P file                   PID file (default: %s)\n", cnf.pidfile);
    printf("  -v                        enable verbose output\n");
    printf("  -V                        display version and exit\n");
    printf("\n");
