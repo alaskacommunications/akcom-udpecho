@@ -194,7 +194,7 @@ void my_debug(const char * fmt, ...);
 void my_error(const char * fmt, ...);
 
 // log connection
-int my_log_conn(int mode, uint64_t * connp, union my_sa * sap,
+int my_log_conn(int mode, size_t * connp, union my_sa * sap,
    struct udp_echo_plus * msgp, ssize_t ssize, struct timespec * tsp,
    useconds_t delay);
 
@@ -729,7 +729,7 @@ void my_error(const char * fmt, ...)
 
 
 // log connection
-int my_log_conn(int mode, uint64_t * connp, union my_sa * sap,
+int my_log_conn(int mode, size_t * connp, union my_sa * sap,
    struct udp_echo_plus * msgp, ssize_t ssize, struct timespec * tsp,
    useconds_t delay)
 {
