@@ -234,7 +234,7 @@ int main(int argc, char * argv[])
    cnf_host = argv[optind++];
    if (optind < argc)
    {
-      cnf_port = strtoul(argv[optind++], &ptr, 10);
+      cnf_port = (short)strtoul(argv[optind++], &ptr, 10);
       if ( (!(cnf_port)) || ((ptr[0])) )
       {
          my_usage_error("invalid port number");

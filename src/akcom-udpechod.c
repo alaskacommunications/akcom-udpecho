@@ -149,7 +149,7 @@ struct
    uint16_t      port;         // UDP port number
    uint16_t      echoplus;     // enable echo plus
    int           drop_perct;   // drop percentage
-   int32_t       delay;        // Delay range in microseconds
+   useconds_t    delay;        // Delay range in microseconds
    int32_t       verbose;      // runtime verbosity
    int           facility;     // syslog facility
    int           dont_fork;
@@ -157,7 +157,7 @@ struct
    uid_t         uid;          // setuid
    gid_t         gid;          // setgid
 }
-cnf =
+static cnf =
 {
    .prog_name    = "a.out",
    .pidfile      = "/var/run/" PROGRAM_NAME ".pid",
@@ -268,7 +268,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'd':
-         cnf.drop_perct = atol(optarg);
+         cnf.drop_perct = atoi(optarg);
          if ((cnf.drop_perct < 0) || (cnf.drop_perct > 99))
          {
             my_usage_error("invalid value for `-d'");
@@ -277,7 +277,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'D':
-         cnf.delay = atol(optarg);
+         cnf.delay = (useconds_t)atoll(optarg);
          break;
 
          case 'e':
@@ -402,10 +402,10 @@ int main(int argc, char * argv[])
    // seed psuedo random number generator
    my_debug("seeding psuedo random number generator");
    clock_gettime(CLOCK_REALTIME, &ts);
-   seed  = (int)ts.tv_sec;
-   seed += (int)ts.tv_nsec;
-   seed += (int)getpid();
-   seed += (int)getppid();
+   seed  = (unsigned)ts.tv_sec;
+   seed += (unsigned)ts.tv_nsec;
+   seed += (unsigned)getpid();
+   seed += (unsigned)getppid();
    srand(seed);
 
    // starts daemon functions
@@ -415,7 +415,6 @@ int main(int argc, char * argv[])
       syslog(LOG_NOTICE, "daemon stopping");
       closelog();
       return(1);
-      break;
 
       case 0:
       return(0);
@@ -451,7 +450,7 @@ int my_daemonize(void)
    char                      buff[16];
    char                      addr_str[512];
    pid_t                     pid;
-   short                     port;
+   unsigned short            port;
    FILE                    * fs;
    struct stat               sb;
    union
@@ -673,6 +672,7 @@ int my_daemonize(void)
    };
 
    // record PID in pidfile
+   pid = getpid();
    snprintf(buff, sizeof(buff), "%i", pid);
    write(fd, buff, strlen(buff));
    close(fd);
@@ -735,7 +735,7 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
 {
    const char               * mode_name;
    char                       addr_str[INET6_ADDRSTRLEN];
-   short                      port;
+   unsigned short             port;
 
    // determine log entry type
    switch(mode)
@@ -869,7 +869,7 @@ int my_loop(int s, size_t * connp)
    delay = 0;
    if (cnf.delay > 0)
    {
-      delay = rand() % cnf.delay;
+      delay = (useconds_t)rand() % cnf.delay;
       syslog(LOG_DEBUG, "conn %zu: delaying response for %i ms", *connp, delay);
       usleep(delay);
    };
@@ -887,7 +887,7 @@ int my_loop(int s, size_t * connp)
       syslog(LOG_DEBUG, "conn %zu: updating echo plus header", *connp);
       udpbuff.msg.reply_time = htonl(ms & 0xFFFFFFFFLL);
    };
-   sendto(s, udpbuff.bytes, ssize, 0, &sa.sa, sinlen);
+   sendto(s, udpbuff.bytes, (size_t)ssize, 0, &sa.sa, sinlen);
 
    // log response
    my_log_conn(MY_SENT, connp, &sa, &udpbuff.msg, ssize, &ts, delay);
