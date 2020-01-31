@@ -42,7 +42,16 @@ else
 endif
 
 
-CFLAGS					= -Wall -Wno-unknown-pragmas -DPACKAGE_VERSION='"$(PACKAGE_VERSION)"'
+CFLAGS					= -O2 \
+					  -std=gnu11 \
+					  -pedantic \
+					   -W \
+					  -Wall \
+					  -Wextra \
+					  -Weverything \
+					  -Wno-unknown-pragmas \
+					  -Wno-format-nonliteral \
+					  -DPACKAGE_VERSION='"$(PACKAGE_VERSION)"'
 LIBTOOL					?= libtool
 INSTALL					?= install
 PREFIX					?= /usr/local
