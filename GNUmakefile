@@ -51,6 +51,7 @@ CFLAGS					= -O2 \
 					  -Weverything \
 					  -Wno-unknown-pragmas \
 					  -Wno-format-nonliteral \
+					  -Wno-reserved-id-macro \
 					  -DPACKAGE_VERSION='"$(PACKAGE_VERSION)"'
 LIBTOOL					?= libtool
 INSTALL					?= install
@@ -70,11 +71,11 @@ OBJS					= src/akcom-udpecho.lo \
 all: $(PROGS)
 
 
-src/akcom-udpecho.lo: src/akcom-udpecho.c
+src/akcom-udpecho.lo: src/akcom-udpecho.c src/akcom-udpecho.h
 	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c src/akcom-udpecho.c
 
 
-src/akcom-udpechod.lo: src/akcom-udpechod.c
+src/akcom-udpechod.lo: src/akcom-udpechod.c src/akcom-udpecho.h
 	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c src/akcom-udpechod.c
 
 

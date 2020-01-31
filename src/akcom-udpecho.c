@@ -79,6 +79,8 @@
 #include <signal.h>
 #include <poll.h>
 
+#include "akcom-udpecho.h"
+
 
 ///////////////////
 //               //
@@ -104,24 +106,6 @@
 //             //
 /////////////////
 #pragma mark - Datatypes
-
-union my_sa
-{
-   struct sockaddr         sa;
-   struct sockaddr_in      sin;
-   struct sockaddr_in6     sin6;
-   struct sockaddr_storage ss;
-};
-
-
-struct udp_echo_plus
-{
-   uint32_t  req_sn;
-   uint32_t  res_sn;
-   uint32_t  recv_time;
-   uint32_t  reply_time;
-   uint32_t  failures;
-};
 
 
 /////////////////
