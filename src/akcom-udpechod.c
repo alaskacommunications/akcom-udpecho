@@ -327,6 +327,8 @@ int main(int argc, char * argv[])
 
          case 'n':
          cnf.dont_fork = 1;
+         if (!(cnf.verbose))
+            cnf.verbose++;
          break;
 
          case 'p':
