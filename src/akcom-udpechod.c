@@ -187,6 +187,12 @@ int main(int argc, char * argv[]);
 // daemonize process
 int my_daemonize(void);
 
+// display debug message
+void my_debug(const char * fmt, ...);
+
+// display error message
+void my_error(const char * fmt, ...);
+
 // log connection
 int my_log_conn(int mode, uint64_t * connp, union my_sa * sap,
    struct udp_echo_plus * msgp, ssize_t ssize, struct timespec * tsp,
@@ -217,7 +223,6 @@ int main(int argc, char * argv[])
 {
    char                    * ptr;
    int                       c;
-   int                       opts;
    int                       s;
    unsigned                  seed;
    struct timespec           ts;
@@ -327,8 +332,6 @@ int main(int argc, char * argv[])
 
          case 'n':
          cnf.dont_fork = 1;
-         if (!(cnf.verbose))
-            cnf.verbose++;
          break;
 
          case 'p':
@@ -388,18 +391,8 @@ int main(int argc, char * argv[])
       return(1);
    };
 
-   // open syslog
-   opts = LOG_PID;
-   if ((cnf.verbose))
-      opts |= LOG_PERROR;
-   openlog(cnf.prog_name, opts, cnf.facility);
-   syslog(LOG_NOTICE, "%s v%s starting", PROGRAM_NAME, PACKAGE_VERSION);
-   syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf.echoplus)) ? "yes" : "no");
-   syslog(LOG_NOTICE, "random delay: %u ms", cnf.delay);
-   syslog(LOG_NOTICE, "drop probability: %u%%", cnf.drop_perct);
-
    // configure signals
-   syslog(LOG_DEBUG, "configuring signal handling");
+   my_debug("configuring signal handling");
    signal(SIGHUP,  SIG_IGN);
    signal(SIGPIPE, SIG_IGN);
    signal(SIGINT,  my_sighandler);
@@ -407,7 +400,7 @@ int main(int argc, char * argv[])
    signal(SIGTERM, my_sighandler);
 
    // seed psuedo random number generator
-   syslog(LOG_DEBUG, "seeding psuedo random number generator");
+   my_debug("seeding psuedo random number generator");
    clock_gettime(CLOCK_REALTIME, &ts);
    seed  = (int)ts.tv_sec;
    seed += (int)ts.tv_nsec;
@@ -455,9 +448,9 @@ int my_daemonize(void)
    int                       opt;
    socklen_t                 socklen;
    char                      pidfile[512];
-   char                      buff[512];
+   char                      buff[16];
+   char                      addr_str[512];
    pid_t                     pid;
-   pid_t                     oldpid;
    short                     port;
    FILE                    * fs;
    struct stat               sb;
@@ -471,19 +464,19 @@ int my_daemonize(void)
 
    // check for existing instance
    fs = NULL;
-   syslog(LOG_DEBUG, "checking for existing PID file (%s)", cnf.pidfile);
+   my_debug("checking for existing PID file (%s)", cnf.pidfile);
    if ((rc = stat(cnf.pidfile, &sb)) == -1)
    {
       if (errno != ENOENT)
       {
-         syslog(LOG_ERR, "error: stat(): %s", strerror(errno));
+         my_error("stat(): %s", strerror(errno));
          return(-1);
       };
    } else if ((fs = fopen(cnf.pidfile, "r")) == NULL)
    {
       if (errno != ENOENT)
       {
-         syslog(LOG_ERR, "error: fopen(): %s", strerror(errno));
+         my_error("fopen(): %s", strerror(errno));
          return(-1);
       };
    } else
@@ -494,33 +487,33 @@ int my_daemonize(void)
       {
          if (errno == ESRCH)
          {
-            syslog(LOG_DEBUG, "removing stale PID file");
+            my_debug("removing stale PID file");
             unlink(cnf.pidfile);
          } else
          {
-            syslog(LOG_ERR, "error: kill(): %s", strerror(errno));
+            my_error("kill(): %s", strerror(errno));
             return(-1);
          };
       } else
       {
-         syslog(LOG_ERR, "daemon already running");
+         my_error("daemon already running");
          return(-1);
       };
    };
 
    // create PID file
-   syslog(LOG_DEBUG, "creating PID file");
+   my_debug("creating PID file");
    strncpy(pidfile, cnf.pidfile, sizeof(pidfile)-7);
    strcat(pidfile, "XXXXXX");
    if ((fd = mkstemp(pidfile)) == -1)
    {
-      syslog(LOG_ERR, "error: mkstemp(): %s", strerror(errno));
+      my_error("mkstemp(): %s", strerror(errno));
       return(-1);
    };
-   syslog(LOG_DEBUG, "temp pidfile: %s", pidfile);
+   my_debug("temp pidfile: %s", pidfile);
    if ((rc = link(pidfile, cnf.pidfile)) == -1)
    {
-      syslog(LOG_ERR, "error: mkstemp(): %s", strerror(errno));
+      my_error("mkstemp(): %s", strerror(errno));
       close(fd);
       unlink(pidfile);
       return(-1);
@@ -528,7 +521,7 @@ int my_daemonize(void)
    unlink(pidfile);
    if ((rc = fchmod(fd, 0644)) == -1)
    {
-      syslog(LOG_ERR, "error: fchmod(): %s", strerror(errno));
+      my_error("fchmod(): %s", strerror(errno));
       close(fd);
       return(-1);
    };
@@ -537,12 +530,12 @@ int my_daemonize(void)
    {
       if ((rc = fchown(fd, cnf.uid, cnf.gid)) == -1)
       {
-         syslog(LOG_ERR, "error: fchown(): %s", strerror(errno));
+         my_error("fchown(): %s", strerror(errno));
          close(fd);
          return(-1);
       };
    };
-   syslog(LOG_DEBUG, "pidfile: %s", cnf.pidfile);
+   my_debug("pidfile: %s", cnf.pidfile);
 
    // determines interface on which to listen
    bzero(&sa, sizeof(sa));
@@ -567,9 +560,9 @@ int my_daemonize(void)
       } else
       {
          if (rc == -1)
-            syslog(LOG_ERR, "error: inet_pton(): %s", strerror(errno));
+            my_error("inet_pton(): %s", strerror(errno));
          else
-            syslog(LOG_ERR, "error: invalid address specified with `-l'");
+            my_error("invalid address specified with `-l'");
          close(fd);
          unlink(cnf.pidfile);
          return(-1);
@@ -577,21 +570,21 @@ int my_daemonize(void)
    };
 
    // creates socket
-   syslog(LOG_DEBUG, "creating UDP socket");
+   my_debug("creating UDP socket");
    if ((s = socket(sa.sa.sa_family, SOCK_DGRAM, 0)) == -1)
    {
-      syslog(LOG_ERR, "socket error: %s", strerror(errno));
+      my_error("socket(): %s", strerror(errno));
       close(fd);
       unlink(cnf.pidfile);
       return(-1);
    };
 
    // set socket options
-   syslog(LOG_DEBUG, "setting socket options");
+   my_debug("setting socket options");
    opt = 1;
    if ((rc = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(int))) == -1)
    {
-      syslog(LOG_ERR, "error: setsockopt(SO_REUSEADDR): %s", strerror(errno));
+      my_error("setsockopt(SO_REUSEADDR): %s", strerror(errno));
       close(s);
       close(fd);
       unlink(cnf.pidfile);
@@ -599,10 +592,10 @@ int my_daemonize(void)
    };
 
    // bind socket to interface
-   syslog(LOG_DEBUG, "binding socket");
+   my_debug("binding socket");
    if ((rc = bind(s, &sa.sa, socklen)) == -1)
    {
-      syslog(LOG_ERR, "error: bind(): %s", strerror(errno));
+      my_error("bind(): %s", strerror(errno));
       close(s);
       close(fd);
       unlink(cnf.pidfile);
@@ -613,7 +606,7 @@ int my_daemonize(void)
    socklen = sizeof(struct sockaddr_storage);
    if ((rc = getsockname(s, &sa.sa, &socklen)) == -1)
    {
-      syslog(LOG_ERR, "error: getsockname(): %s", strerror(errno));
+      my_error("getsockname(): %s", strerror(errno));
       close(s);
       close(fd);
       unlink(cnf.pidfile);
@@ -622,28 +615,27 @@ int my_daemonize(void)
    switch(sa.ss.ss_family)
    {
       case AF_INET:
-      inet_ntop(sa.sin.sin_family, &sa.sin.sin_addr,  buff, sizeof(buff));
+      inet_ntop(sa.sin.sin_family, &sa.sin.sin_addr,  addr_str, sizeof(addr_str));
       port = ntohs(sa.sin.sin_port);
       break;
 
       case AF_INET6:
-      inet_ntop(sa.sin6.sin6_family, &sa.sin6.sin6_addr, buff, sizeof(buff));
+      inet_ntop(sa.sin6.sin6_family, &sa.sin6.sin6_addr, addr_str, sizeof(addr_str));
       port = ntohs(sa.sin6.sin6_port);
       break;
 
       default:
-      syslog(LOG_ERR, "listening socket has invalid address family: %i\n", sa.sa.sa_family);
+      my_error("listening socket has invalid address family: %i\n", sa.sa.sa_family);
       close(s);
       close(fd);
       unlink(cnf.pidfile);
       return(-1);
    };
-   syslog(LOG_INFO, "listening on [%s]:%hu", buff, port);
 
    // change ownership
    if ( (getgid() != cnf.gid) && ((rc = setregid(cnf.gid, cnf.gid)) == -1) )
    {
-      syslog(LOG_ERR, "error: getgid(): %s", strerror(errno));
+      my_error("getgid(): %s", strerror(errno));
       close(s);
       close(fd);
       unlink(cnf.pidfile);
@@ -651,7 +643,7 @@ int my_daemonize(void)
    };
    if ( (getuid() != cnf.uid) && ((rc = setreuid(cnf.uid, cnf.uid)) == -1) )
    {
-      syslog(LOG_ERR, "error: getuid(): %s", strerror(errno));
+      my_error("getuid(): %s", strerror(errno));
       close(s);
       close(fd);
       unlink(cnf.pidfile);
@@ -659,43 +651,80 @@ int my_daemonize(void)
    };
 
    // fork process
-   if ((cnf.dont_fork))
+   if (!(cnf.dont_fork))
    {
-      syslog(LOG_DEBUG, "writing PID to pidfile");
-      snprintf(buff, sizeof(buff), "%i", getpid());
-      write(fd, buff, strlen(buff));
-      close(fd);
-      return(s);
-   };
-   syslog(LOG_DEBUG, "forking process");
-   oldpid = getpid();
-   switch(pid = fork())
-   {
-      case -1:
-      syslog(LOG_ERR, "error: fork(): %s", strerror(errno));
-      break;
+      my_debug("forking process");
+      switch(pid = fork())
+      {
+         case -1:
+         my_error("fork(): %s", strerror(errno));
+         break;
 
-      case 0:
-      closelog();
-      openlog(cnf.prog_name, LOG_PID, cnf.facility);
-      syslog(LOG_INFO, "forked from %i", oldpid);
-      break;
+         case 0:
+         break;
 
-      default:
-      syslog(LOG_INFO, "forking to %i", pid);
-      closelog();
-      close(fd);
-      close(s);
-      return(0);
+         default:
+         my_debug("forking to %i", pid);
+         closelog();
+         close(fd);
+         close(s);
+         return(0);
+      };
    };
 
    // record PID in pidfile
-   syslog(LOG_DEBUG, "writing forked PID to pidfile");
    snprintf(buff, sizeof(buff), "%i", pid);
    write(fd, buff, strlen(buff));
    close(fd);
 
+   // opens syslog
+   openlog(cnf.prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf.facility);
+   syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
+   syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf.echoplus)) ? "yes" : "no");
+   syslog(LOG_NOTICE, "random delay: %u ms", cnf.delay);
+   syslog(LOG_NOTICE, "drop probability: %u%%", cnf.drop_perct);
+   syslog(LOG_NOTICE, "running as UID: %u", getuid());
+   syslog(LOG_NOTICE, "running as GID: %u", getgid());
+   syslog(LOG_NOTICE, "listening on [%s]:%hu", addr_str, port);
+
    return(s);
+}
+
+
+// display debug message
+void my_debug(const char * fmt, ...)
+{
+   va_list args;
+
+   if (!(cnf.verbose))
+      return;
+
+   printf("%s: ", cnf.prog_name);
+
+   va_start(args, fmt);
+   vprintf(fmt, args);
+   va_end(args);
+
+   printf("\n");
+
+   return;
+}
+
+
+// display error message
+void my_error(const char * fmt, ...)
+{
+   va_list args;
+
+   fprintf(stderr, "%s: error: ", cnf.prog_name);
+
+   va_start(args, fmt);
+   vfprintf(stderr, fmt, args);
+   va_end(args);
+
+   fprintf(stderr, "\n");
+
+   return;
 }
 
 
