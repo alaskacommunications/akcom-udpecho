@@ -100,6 +100,10 @@
 #define PACKAGE_VERSION "0.0"
 #endif
 
+#define MY_SENT 0
+#define MY_RECV 1
+#define MY_DROP 2
+
 
 /////////////////
 //             //
@@ -107,6 +111,15 @@
 //             //
 /////////////////
 #pragma mark - Datatypes
+
+union my_sa
+{
+   struct sockaddr         sa;
+   struct sockaddr_in      sin;
+   struct sockaddr_in6     sin6;
+   struct sockaddr_storage ss;
+};
+
 
 struct udp_echo_plus
 {
@@ -165,6 +178,11 @@ int main(int argc, char * argv[]);
 
 // daemonize process
 int my_daemonize(void);
+
+// log connection
+int my_log_conn(int mode, uint64_t * connp, union my_sa * sap,
+   struct udp_echo_plus * msgp, ssize_t ssize, struct timespec * tsp,
+   useconds_t delay);
 
 // main loop
 int my_loop(int s, size_t * connp);
@@ -539,24 +557,91 @@ int my_daemonize(void)
 }
 
 
+// log connection
+int my_log_conn(int mode, uint64_t * connp, union my_sa * sap,
+   struct udp_echo_plus * msgp, ssize_t ssize, struct timespec * tsp,
+   useconds_t delay)
+{
+   const char               * mode_name;
+   char                       addr_str[INET6_ADDRSTRLEN];
+   short                      port;
+
+   // determine log entry type
+   switch(mode)
+   {
+      case MY_SENT: mode_name = "sent"; break;
+      case MY_RECV: mode_name = "recv"; break;
+      case MY_DROP: mode_name = "drop"; break;
+      default: return(-1);
+   };
+
+   // convert address to presentation format
+   switch(sap->ss.ss_family)
+   {
+      case AF_INET:
+      inet_ntop(AF_INET, &sap->sin.sin_addr, addr_str, sizeof(addr_str));
+      port =        ntohs(sap->sin.sin_port);
+      break;
+
+      case AF_INET6:
+      inet_ntop(AF_INET6, &sap->sin6.sin6_addr, addr_str, sizeof(addr_str));
+      port =         ntohs(sap->sin6.sin6_port);
+      break;
+
+      default:
+      syslog(LOG_DEBUG, "conn %zu: ignoring request from unknown address family: %i", *connp, sap->ss.ss_family);
+      return(-1);
+   };
+
+   // log connection
+   if ((cnf.echoplus))
+   {
+      syslog(LOG_INFO,
+         "conn %zu: client: [%s]:%hu; %s bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u ms;",
+         *connp,
+         addr_str,
+         port,
+         mode_name,
+         ssize,
+         tsp->tv_sec,
+         tsp->tv_nsec,
+         ntohl(msgp->req_sn),
+         delay
+      );
+   } else
+   {
+      syslog(LOG_INFO,
+         "conn %zu: client: [%s]:%hu; %s bytes: %zi; timestamp: %lu.%09lu;",
+         *connp,
+         addr_str,
+         port,
+         mode_name,
+         ssize,
+         tsp->tv_sec,
+         tsp->tv_nsec
+      );
+   };
+
+   // log if IPv4 address mapped to IPv6
+   if (sap->ss.ss_family == AF_INET6)
+      if (mode == MY_RECV) 
+         if (IN6_IS_ADDR_V4MAPPED(&sap->sin6.sin6_addr) != 0)
+            syslog(LOG_INFO, "conn %zu: client: [%s]:%hu; IPv4 mapped address", *connp, addr_str, port);
+
+   return(0);
+}
+
+
 // main loop
 int my_loop(int s, size_t * connp)
 {
    socklen_t                  sinlen;
    ssize_t                    ssize;
    useconds_t                 delay;
-   char                       addr_str[INET6_ADDRSTRLEN];
-   short                      port;
    struct timespec            ts;
    uint64_t                   ms;
    struct pollfd              fds[2];
-   union
-   {
-      struct sockaddr         sa;
-      struct sockaddr_in      sin;
-      struct sockaddr_in6     sin6;
-      struct sockaddr_storage ss;
-   } sa;
+   union my_sa                sa;
    union
    {
       char                    bytes[MY_BUFF_SIZE];
@@ -567,7 +652,9 @@ int my_loop(int s, size_t * connp)
    fds[0].fd      = s;
    fds[0].events  = POLLIN;
    fds[0].revents = 0;
-   if ((poll(fds, 1, 30000)) < 1)
+   if (cnf.verbose > 1)
+      syslog(LOG_DEBUG, "waiting for echo request");
+   if ((poll(fds, 1, 5000)) < 1)
       return(0);
 
    // increment connection counter
@@ -585,25 +672,8 @@ int my_loop(int s, size_t * connp)
    ms  = (uint64_t)(ts.tv_sec * 1000000000);
    ms += (uint64_t)ts.tv_nsec;
 
-   // parse UDP source address
-   switch(sa.ss.ss_family)
-   {
-      case AF_INET:
-      syslog(LOG_DEBUG, "conn %zu: processing client IPv4 address", *connp);
-      inet_ntop(AF_INET, &sa.sin.sin_addr, addr_str, sizeof(addr_str));
-      port = ntohs(sa.sin.sin_port);
-      break;
-
-      case AF_INET6:
-      syslog(LOG_DEBUG, "conn %zu: processing client IPv6 address", *connp);
-      inet_ntop(AF_INET6, &sa.sin6.sin6_addr, addr_str, sizeof(addr_str));
-      port = ntohs(sa.sin6.sin6_port);
-      break;
-
-      default:
-      syslog(LOG_DEBUG, "conn %zu: ignoring unknown address family: %i", *connp, sa.ss.ss_family);
-      return(0);
-   };
+   // log connection
+   my_log_conn(MY_RECV, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
 
    // process echo+ packet
    if ((cnf.echoplus))
@@ -613,23 +683,13 @@ int my_loop(int s, size_t * connp)
       udpbuff.msg.recv_time = htonl(ms & 0xFFFFFFFFLL);
       udpbuff.msg.failures  = 0;
    };
-   syslog(LOG_INFO,
-          "conn %zu: client: [%s]:%hu; recv bytes: %zi; timestamp: %lu.%09lu; seq: %u;",
-          *connp,
-          addr_str,
-          port,
-          ssize,
-          ts.tv_sec,
-          ts.tv_nsec,
-          (((cnf.echoplus)) ? ntohl(udpbuff.msg.req_sn) : 0)
-          );
 
    // randomly drop packets
    if (cnf.drop_perct > 0)
    {
       if ( (rand() % 100) < cnf.drop_perct)
       {
-         syslog(LOG_INFO, "conn %zu: client: [%s]:%hu; dropping echo request", *connp, addr_str, port);
+         my_log_conn(MY_DROP, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
          return(0);
       };
    };
@@ -657,17 +717,9 @@ int my_loop(int s, size_t * connp)
       udpbuff.msg.reply_time = htonl(ms & 0xFFFFFFFFLL);
    };
    sendto(s, udpbuff.bytes, ssize, 0, &sa.sa, sinlen);
-   syslog(LOG_INFO,
-          "conn %zu: client: [%s]:%hu; sent bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u usec;",
-          *connp,
-          addr_str,
-          port,
-          ssize,
-          ts.tv_sec,
-          ts.tv_nsec,
-          (((cnf.echoplus)) ? ntohl(udpbuff.msg.req_sn) : 0),
-          delay
-          );
+
+   // log response
+   my_log_conn(MY_SENT, connp, &sa, &udpbuff.msg, ssize, &ts, delay);
 
    return(0);
 }
