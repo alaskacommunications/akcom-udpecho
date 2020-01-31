@@ -151,6 +151,7 @@ struct
    int32_t       verbose;      // runtime verbosity
    int           facility;     // syslog facility
    int           dont_fork;
+   const char  * listen;       // IP address to listen for requests
 }
 cnf =
 {
@@ -163,6 +164,7 @@ cnf =
    .verbose      = 0,
    .facility     = LOG_DAEMON,
    .dont_fork    = 0,
+   .listen       = NULL,
 };
 
 
@@ -217,13 +219,14 @@ int main(int argc, char * argv[])
    int                       opt_index;
 
    // getopt options
-   static char   short_opt[] = "d:D:ehnp:P:rvV";
+   static char   short_opt[] = "d:D:ehl:np:P:rvV";
    static struct option long_opt[] =
    {
       {"drop",          required_argument, 0, 'd'},
       {"delay",         required_argument, 0, 'D'},
       {"echoplus",      no_argument,       0, 'e'},
       {"help",          no_argument,       0, 'h'},
+      {"listen",        required_argument, 0, 'l'},
       {"foreground",    no_argument,       0, 'n'},
       {"port",          required_argument, 0, 'p'},
       {"pidfile",       required_argument, 0, 'P'},
@@ -293,6 +296,10 @@ int main(int argc, char * argv[])
          case 'h':
          my_usage();
          return(0);
+
+         case 'l':
+         cnf.listen = optarg;
+         break;
 
          case 'n':
          cnf.dont_fork = 1;
@@ -468,9 +475,41 @@ int my_daemonize(void)
    unlink(pidfile);
    syslog(LOG_DEBUG, "pidfile: %s", cnf.pidfile);
 
+   // determines interface on which to listen
+   bzero(&sa, sizeof(sa));
+   if (!(cnf.listen))
+   {
+      sa.sin6.sin6_family = AF_INET6;
+      sa.sin6.sin6_addr   = in6addr_any;
+      sa.sin6.sin6_port   = htons(cnf.port);
+      socklen             = sizeof(struct sockaddr_in6);
+   } else
+   {
+      if ((rc = inet_pton(AF_INET, cnf.listen, &sa.sin.sin_addr)) == 1)
+      {
+         sa.sin.sin_family   = AF_INET;
+         sa.sin.sin_port     = htons(cnf.port);
+         socklen             = sizeof(struct sockaddr_in);
+      } else if ((rc = inet_pton(AF_INET6, cnf.listen, &sa.sin6.sin6_addr)) == 1)
+      {
+         sa.sin6.sin6_family = AF_INET6;
+         sa.sin6.sin6_port   = htons(cnf.port);
+         socklen             = sizeof(struct sockaddr_in6);
+      } else
+      {
+         if (rc == -1)
+            syslog(LOG_ERR, "error: inet_pton(): %s", strerror(errno));
+         else
+            syslog(LOG_ERR, "error: invalid address specified with `-l'");
+         close(fd);
+         unlink(cnf.pidfile);
+         return(-1);
+      };
+   };
+
    // creates socket
    syslog(LOG_DEBUG, "creating UDP socket");
-   if ((s = socket(PF_INET6, SOCK_DGRAM, 0)) == -1)
+   if ((s = socket(sa.sa.sa_family, SOCK_DGRAM, 0)) == -1)
    {
       syslog(LOG_ERR, "socket error: %s", strerror(errno));
       close(fd);
@@ -492,11 +531,6 @@ int my_daemonize(void)
 
    // bind socket to interface
    syslog(LOG_DEBUG, "binding socket");
-   bzero(&sa, sizeof(sa));
-   sa.sin6.sin6_family = AF_INET6;
-   sa.sin6.sin6_addr   = in6addr_any;
-   sa.sin6.sin6_port   = htons(cnf.port);
-   socklen             = sizeof(struct sockaddr_in6);
    if ((rc = bind(s, &sa.sa, socklen)) == -1)
    {
       syslog(LOG_ERR, "error: bind(): %s", strerror(errno));
@@ -507,7 +541,7 @@ int my_daemonize(void)
    };
 
    // log socket address
-   socklen = sizeof(struct sockaddr_in6);
+   socklen = sizeof(struct sockaddr_storage);
    if ((rc = getsockname(s, &sa.sa, &socklen)) == -1)
    {
       syslog(LOG_ERR, "error: getsockname(): %s", strerror(errno));
@@ -759,13 +793,13 @@ void my_sighandler(int signum)
 // display program usage
 void my_usage(void)
 {
-
    printf("Usage: %s [options]\n", cnf.prog_name);
    printf("OPTIONS:\n");
    printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
    printf("  -D ms,   --delay=ms       set echo delay range to microseconds (default: %u)\n", cnf.delay);
    printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf.echoplus)) ? " (default)" : "");
    printf("  -h,      --help           print this help and exit\n");
+   printf("  -l addr, --listen=addr    bind to IP address (default: all)\n");
    printf("  -n,      --foreground     do not fork\n");
    printf("  -p port, --port=port      list on port number (default: %u)\n", cnf.port);
    printf("  -P file, --pidfile=file   PID file (default: %s)\n", cnf.pidfile);
