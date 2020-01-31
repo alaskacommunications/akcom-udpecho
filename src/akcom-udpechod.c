@@ -78,6 +78,8 @@
 #include <syslog.h>
 #include <signal.h>
 #include <poll.h>
+#include <pwd.h>
+#include <grp.h>
 
 
 ///////////////////
@@ -152,6 +154,8 @@ struct
    int           facility;     // syslog facility
    int           dont_fork;
    const char  * listen;       // IP address to listen for requests
+   uid_t         uid;          // setuid
+   gid_t         gid;          // setgid
 }
 cnf =
 {
@@ -165,6 +169,8 @@ cnf =
    .facility     = LOG_DAEMON,
    .dont_fork    = 0,
    .listen       = NULL,
+   .uid          = 0,
+   .gid          = 0,
 };
 
 
@@ -217,20 +223,25 @@ int main(int argc, char * argv[])
    struct timespec           ts;
    size_t                    conn;
    int                       opt_index;
+   struct passwd           * pw;
+   struct group            * gr;
 
    // getopt options
-   static char   short_opt[] = "d:D:ehl:np:P:rvV";
+   static char   short_opt[] = "d:D:efg:hl:np:P:ru:vV";
    static struct option long_opt[] =
    {
       {"drop",          required_argument, 0, 'd'},
       {"delay",         required_argument, 0, 'D'},
       {"echoplus",      no_argument,       0, 'e'},
+      {"facility",      required_argument, 0, 'f'},
+      {"group",         required_argument, 0, 'g'},
       {"help",          no_argument,       0, 'h'},
       {"listen",        required_argument, 0, 'l'},
       {"foreground",    no_argument,       0, 'n'},
       {"port",          required_argument, 0, 'p'},
       {"pidfile",       required_argument, 0, 'P'},
       {"rfc",           no_argument,       0, 'r'},
+      {"user",          required_argument, 0, 'u'},
       {"verbose",       no_argument,       0, 'v'},
       {"version",       no_argument,       0, 'V'},
       {NULL,            0,                 0, 0  }
@@ -293,6 +304,19 @@ int main(int argc, char * argv[])
          };
          break;
 
+         case 'g':
+         errno = 0;
+         if ((gr = getgrnam(optarg)) == NULL)
+         {
+            if (errno == 0)
+               fprintf(stderr, "%s: invalid group specified\n", cnf.prog_name);
+            else
+               fprintf(stderr, "%s: getgrnam(): %s\n", cnf.prog_name, strerror(errno));
+            return(1);
+         };
+         cnf.gid = gr->gr_gid;
+         break;
+
          case 'h':
          my_usage();
          return(0);
@@ -317,6 +341,19 @@ int main(int argc, char * argv[])
          cnf.echoplus = 0;
          break;
 
+         case 'u':
+         errno = 0;
+         if ((pw = getpwnam(optarg)) == NULL)
+         {
+            if (errno == 0)
+               fprintf(stderr, "%s: invalid user specified\n", cnf.prog_name);
+            else
+               fprintf(stderr, "%s: getpwnam(): %s\n", cnf.prog_name, strerror(errno));
+            return(1);
+         };
+         cnf.uid = pw->pw_uid;
+         break;
+
          case 'v':
          cnf.verbose++;
          break;
@@ -333,6 +370,20 @@ int main(int argc, char * argv[])
          my_usage_error("unrecognized option `--%c'", c);
          return(1);
       };
+   };
+
+   // set defaults for setuid/setgid
+   cnf.gid = (cnf.gid == 0) ? getgid() : cnf.gid;
+   cnf.uid = (cnf.uid == 0) ? getuid() : cnf.uid;
+   if ( (cnf.gid != getgid()) && (getuid() != 0) )
+   {
+      fprintf(stderr, "%s: setgid requires root access\n", cnf.prog_name);
+      return(1);
+   };
+   if ( (cnf.uid != getuid()) && (getuid() != 0) )
+   {
+      fprintf(stderr, "%s: setuid requires root access\n", cnf.prog_name);
+      return(1);
    };
 
    // open syslog
@@ -473,6 +524,22 @@ int my_daemonize(void)
       return(-1);
    };
    unlink(pidfile);
+   if ((rc = fchmod(fd, 0644)) == -1)
+   {
+      syslog(LOG_ERR, "error: fchmod(): %s", strerror(errno));
+      close(fd);
+      return(-1);
+   };
+   if ( (cnf.uid != getuid()) ||
+        (cnf.gid != getgid()) )
+   {
+      if ((rc = fchown(fd, cnf.uid, cnf.gid)) == -1)
+      {
+         syslog(LOG_ERR, "error: fchown(): %s", strerror(errno));
+         close(fd);
+         return(-1);
+      };
+   };
    syslog(LOG_DEBUG, "pidfile: %s", cnf.pidfile);
 
    // determines interface on which to listen
@@ -568,9 +635,26 @@ int my_daemonize(void)
       close(fd);
       unlink(cnf.pidfile);
       return(-1);
-      break;
    };
    syslog(LOG_INFO, "listening on [%s]:%hu", buff, port);
+
+   // change ownership
+   if ( (getgid() != cnf.gid) && ((rc = setregid(cnf.gid, cnf.gid)) == -1) )
+   {  
+      syslog(LOG_ERR, "error: getgid(): %s", strerror(errno));
+      close(s);
+      close(fd);
+      unlink(cnf.pidfile);
+      return(-1);
+   };
+   if ( (getuid() != cnf.uid) && ((rc = setreuid(cnf.uid, cnf.uid)) == -1) )
+   {
+      syslog(LOG_ERR, "error: getuid(): %s", strerror(errno));
+      close(s);
+      close(fd);
+      unlink(cnf.pidfile);
+      return(-1);
+   };
 
    // fork process
    if ((cnf.dont_fork))
@@ -798,12 +882,15 @@ void my_usage(void)
    printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
    printf("  -D ms,   --delay=ms       set echo delay range to microseconds (default: %u)\n", cnf.delay);
    printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf.echoplus)) ? " (default)" : "");
+   printf("  -f str,  --facility=str   set syslog facility (default: daemon)\n");
+   printf("  -g gid,  --group=gid      setgid to gid (default: none)\n");
    printf("  -h,      --help           print this help and exit\n");
    printf("  -l addr, --listen=addr    bind to IP address (default: all)\n");
    printf("  -n,      --foreground     do not fork\n");
    printf("  -p port, --port=port      list on port number (default: %u)\n", cnf.port);
    printf("  -P file, --pidfile=file   PID file (default: %s)\n", cnf.pidfile);
    printf("  -r,      --rfc            RFC compliant echo protocol%s\n", (!(cnf.echoplus)) ? " (default)" : "");
+   printf("  -u uid,  --user=uid       setuid to uid (default: none)\n");
    printf("  -v,      --verbose        enable verbose output\n");
    printf("  -V,      --version        print version number and exit\n");
    printf("\n");
