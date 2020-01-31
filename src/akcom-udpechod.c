@@ -56,7 +56,7 @@
 ///////////////
 #pragma mark - Headers
 
-#include <stdint.h> 
+#include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -439,7 +439,7 @@ int main(int argc, char * argv[])
    close(s);
    unlink(cnf.pidfile);
    closelog();
- 
+
    return(0);
 }
 
@@ -640,7 +640,7 @@ int my_daemonize(void)
 
    // change ownership
    if ( (getgid() != cnf.gid) && ((rc = setregid(cnf.gid, cnf.gid)) == -1) )
-   {  
+   {
       syslog(LOG_ERR, "error: getgid(): %s", strerror(errno));
       close(s);
       close(fd);
@@ -764,7 +764,7 @@ int my_log_conn(int mode, uint64_t * connp, union my_sa * sap,
 
    // log if IPv4 address mapped to IPv6
    if (sap->ss.ss_family == AF_INET6)
-      if (mode == MY_RECV) 
+      if (mode == MY_RECV)
          if (IN6_IS_ADDR_V4MAPPED(&sap->sin6.sin6_addr) != 0)
             syslog(LOG_INFO, "conn %zu: client: [%s]:%hu; IPv4 mapped address", *connp, addr_str, port);
 
