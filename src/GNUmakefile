@@ -59,10 +59,10 @@ PREFIX					?= /usr/local
 INSTALL_OPTS				?= --strip -D
 
 
-PROGS					= src/akcom-udpecho \
-					  src/akcom-udpechod
-OBJS					= src/akcom-udpecho.lo \
-					  src/akcom-udpechod.lo
+PROGS					= akcom-udpecho \
+					  akcom-udpechod
+OBJS					= akcom-udpecho.lo \
+					  akcom-udpechod.lo
 
 
 .PHONY: all install clean uninstall
@@ -71,12 +71,12 @@ OBJS					= src/akcom-udpecho.lo \
 all: $(PROGS)
 
 
-src/akcom-udpecho.lo: src/akcom-udpecho.c src/akcom-udpecho.h
-	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c src/akcom-udpecho.c
+akcom-udpecho.lo: akcom-udpecho.c akcom-udpecho.h
+	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c akcom-udpecho.c
 
 
-src/akcom-udpechod.lo: src/akcom-udpechod.c src/akcom-udpecho.h
-	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c src/akcom-udpechod.c
+akcom-udpechod.lo: akcom-udpechod.c akcom-udpecho.h
+	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c akcom-udpechod.c
 
 
 $(PROGS): $(OBJS)
@@ -84,8 +84,8 @@ $(PROGS): $(OBJS)
 
 
 install: $(PROGS)
-	$(INSTALL) $(INSTALL_OPTS) src/akcom-udpecho  $(DESTDIR)$(PREFIX)/bin/akcom-udpecho
-	$(INSTALL) $(INSTALL_OPTS) src/akcom-udpechod $(DESTDIR)$(PREFIX)/sbin/akcom-udpechod
+	$(INSTALL) $(INSTALL_OPTS) akcom-udpecho  $(DESTDIR)$(PREFIX)/bin/akcom-udpecho
+	$(INSTALL) $(INSTALL_OPTS) akcom-udpechod $(DESTDIR)$(PREFIX)/sbin/akcom-udpechod
 
 
 uninstall:
