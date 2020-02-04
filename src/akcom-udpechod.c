@@ -56,6 +56,10 @@
 ///////////////
 #pragma mark - Headers
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>

@@ -1,0 +1,13 @@
+/compile
+/config.guess
+/config.sub
+/depcomp
+/git-package-version-prefix.h
+/git-package-version.h
+/git-package-version.txt
+/install-sh
+/ltmain.sh
+/missing
+/test-driver
+/texinfo.tex
+/ylwrap

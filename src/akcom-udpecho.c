@@ -56,6 +56,10 @@
 ///////////////
 #pragma mark - Headers
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -153,7 +157,7 @@ int main(int argc, char * argv[])
    int                       c;
    int                       opt_index;
    char                    * ptr;
-   union my_sa               sa;
+   //union my_sa               sa;
 
    // getopt options
    static char   short_opt[] = "d:D:efg:hl:np:P:ru:vV";
