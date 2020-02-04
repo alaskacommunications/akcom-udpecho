@@ -31,7 +31,7 @@
 #
 
 
-include GNUmakefile.version
+include ../GNUmakefile.version
 
 
 GIT_VERSION				= $(shell git describe --long 2>/dev/null|sed -e s/-/./g -e s/^v//g)
