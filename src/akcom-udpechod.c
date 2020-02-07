@@ -669,7 +669,7 @@ int my_daemonize(void)
    openlog(cnf.prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf.facility);
    syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
    syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf.echoplus)) ? "yes" : "no");
-   syslog(LOG_NOTICE, "random delay: %u ms", cnf.delay);
+   syslog(LOG_NOTICE, "random delay: %u us", cnf.delay);
    syslog(LOG_NOTICE, "drop probability: %u%%", cnf.drop_perct);
    syslog(LOG_NOTICE, "running as UID: %u", getuid());
    syslog(LOG_NOTICE, "running as GID: %u", getgid());
@@ -756,7 +756,7 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
    if ((cnf.echoplus))
    {
       syslog(LOG_INFO,
-         "conn %zu: client: [%s]:%hu; %s bytes: %zi; timestamp: %lu.%09lu; seq: %u; delta: %u us; delay: %u ms;",
+         "conn %zu: client: [%s]:%hu; %s bytes: %zi; timestamp: %lu.%09lu; seq: %u; delta: %u us; delay: %u us;",
          *connp,
          addr_str,
          port,
@@ -859,7 +859,7 @@ int my_loop(int s, size_t * connp)
    if (cnf.delay > 0)
    {
       delay = (useconds_t)rand() % cnf.delay;
-      syslog(LOG_DEBUG, "conn %zu: delaying response for %i ms", *connp, delay);
+      syslog(LOG_DEBUG, "conn %zu: delaying response for %i us", *connp, delay);
       usleep(delay);
    };
 
@@ -900,7 +900,7 @@ void my_usage(void)
    printf("Usage: %s [options]\n", cnf.prog_name);
    printf("OPTIONS:\n");
    printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
-   printf("  -D ms,   --delay=ms       set echo delay range to microseconds (default: %u)\n", cnf.delay);
+   printf("  -D usec, --delay=usec     set echo delay range to microseconds (default: %u us)\n", cnf.delay);
    printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf.echoplus)) ? " (default)" : "");
    printf("  -f str,  --facility=str   set syslog facility (default: daemon)\n");
    printf("  -g gid,  --group=gid      setgid to gid (default: none)\n");
