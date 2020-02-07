@@ -756,7 +756,7 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
    if ((cnf.echoplus))
    {
       syslog(LOG_INFO,
-         "conn %zu: client: [%s]:%hu; %s bytes: %zi; timestamp: %lu.%09lu; seq: %u; delay: %u ms;",
+         "conn %zu: client: [%s]:%hu; %s bytes: %zi; timestamp: %lu.%09lu; seq: %u; delta: %u us; delay: %u ms;",
          *connp,
          addr_str,
          port,
@@ -765,6 +765,7 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
          tsp->tv_sec,
          tsp->tv_nsec,
          ntohl(msgp->req_sn),
+         ntohl(msgp->reply_time) - ntohl(msgp->recv_time),
          delay
       );
    } else
