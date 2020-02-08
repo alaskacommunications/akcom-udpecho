@@ -80,7 +80,7 @@ lib_LTLIBRARIES				=
 EXTRA_LIBRARIES				=
 EXTRA_LTLIBRARIES			=
 man_MANS				=
-noinst_HEADERS				= src/akcom-udpecho.h 
+noinst_HEADERS				=
 noinst_PROGRAMS				=
 noinst_LIBRARIES			=
 
@@ -116,7 +116,7 @@ src_akcom_udpecho_CPPFLAGS		= -DPROGRAM_NAME="\"akcom-udpecho\"" $(AM_CPPFLAGS)
 src_akcom_udpecho_CFLAGS		= $(AM_CFLAGS)
 src_akcom_udpecho_LDFLAGS		= $(AM_LDFLAGS)
 src_akcom_udpecho_LDADD			= $(AM_LDADD) 
-src_akcom_udpecho_SOURCES		= src/akcom-udpecho.c src/akcom-udpecho.h
+src_akcom_udpecho_SOURCES		= src/akcom-udpecho.c
 
 
 # macros for src/akcom-udpechod
@@ -125,7 +125,7 @@ src_akcom_udpechod_CPPFLAGS		= -DPROGRAM_NAME="\"akcom-udpechod\"" $(AM_CPPFLAGS
 src_akcom_udpechod_CFLAGS		= $(AM_CFLAGS)
 src_akcom_udpechod_LDFLAGS		= $(AM_LDFLAGS)
 src_akcom_udpechod_LDADD		= $(AM_LDADD) 
-src_akcom_udpechod_SOURCES		= src/akcom-udpechod.c src/akcom-udpecho.h
+src_akcom_udpechod_SOURCES		= src/akcom-udpechod.c
 
 
 # Makefile includes
