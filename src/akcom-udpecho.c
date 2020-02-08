@@ -493,7 +493,7 @@ int main(int argc, char * argv[])
                max_adj = epoch_adj;
             if ((cnf_echoplus))
             {
-               printf("udpecho_seq=%u time=%" PRId64 ".%" PRId64 " ms delay=%llu.%llu ms adj_time=%llu.%llu ms\n",
+               printf("udpecho_seq=%u time=%" PRIu64 ".%" PRIu64 " ms delay=%llu.%llu ms adj_time=%llu.%llu ms\n",
                       rcvbuff.echoplus->req_sn,
                       epoch/10, epoch%10,
                       delay/10, delay%10,
@@ -501,7 +501,7 @@ int main(int argc, char * argv[])
                      );
             } else
             {
-               printf("udpecho_seq=%u time=%" PRId64 ".%" PRId64 " ms\n",
+               printf("udpecho_seq=%u time=%" PRIu64 ".%" PRIu64 " ms\n",
                       rcvbuff.echoplus->req_sn,
                       epoch/10, epoch%10
                      );
@@ -524,14 +524,14 @@ int main(int argc, char * argv[])
              ((count - rcvd) * 100) / count,
              (((count - rcvd) * 1000) / count) % 10
             );
-      printf("round-trip min/avg/max = %" PRId64 ".%" PRId64 "/%" PRId64 ".%" PRId64 "/%" PRId64 ".%" PRId64 " ms\n",
+      printf("round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
              min/10,        min%10,
              (avg/rcvd)/10, (avg/rcvd)%10,
              max/10,        max%10
             );
       if ((cnf_echoplus))
       {
-         printf("adjusted round-trip min/avg/max = %" PRId64 ".%" PRId64 "/%" PRId64 ".%" PRId64 "/%" PRId64 ".%" PRId64 " ms\n",
+         printf("adjusted round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
                 min_adj/10,        min_adj%10,
                 (avg_adj/rcvd)/10, (avg_adj/rcvd)%10,
                 max_adj/10,        max_adj%10
