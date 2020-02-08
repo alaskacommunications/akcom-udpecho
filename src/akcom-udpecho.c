@@ -420,7 +420,6 @@ int main(int argc, char * argv[])
 
    // configure signals
    signal(SIGPIPE, SIG_IGN);
-   signal(SIGINFO, SIG_IGN);
    signal(SIGUSR1, SIG_IGN);
    signal(SIGUSR2, SIG_IGN);
    signal(SIGHUP,  my_stop);
