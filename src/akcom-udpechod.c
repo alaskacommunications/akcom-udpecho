@@ -146,7 +146,7 @@ struct udp_echo_plus
 
 static int should_stop = 0;
 
-struct
+struct app_config
 {
    const char  * prog_name;
    const char  * pidfile;
@@ -160,8 +160,8 @@ struct
    const char  * listen;       // IP address to listen for requests
    uid_t         uid;          // setuid
    gid_t         gid;          // setgid
-}
-static cnf =
+};
+static struct app_config cnf =
 {
    .prog_name    = "a.out",
    .pidfile      = "/var/run/" PROGRAM_NAME ".pid",
