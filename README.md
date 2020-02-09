@@ -37,13 +37,20 @@ Contents
 --------
 
    * Overview
+   * Software Requirements
+   * Utilities
+     - akcom-udpecho
+     - akcom-udpechod
    * Source Code
+   * Package Maintence Notes
 
 
 Overview
 ==========
 
-This package contains a simple UDP echo server and UDP echo client.
+This package contains a UDP echo server and client. Both the client and the
+server support RFC 862 (default) and support TR-143 UDPEchoPlus if passed the
+`--echoplus` flag.
 
 
 Software Requirements
@@ -56,6 +63,73 @@ Software Requirements
    * Git 1.7.2.3
 
 
+Utilities
+=========
+
+akcom-udpecho
+-------------
+
+akcom-udpecho is a shell utility for testing UDP echo servers.
+
+Example usage (RFC 862 compliant):
+
+      $ akcom-udpecho -c 5 udpecho.example.com 30006
+      UDPECHO udpecho.example.com:30006 (209.112.131.108:30006): 20 bytes
+      udpecho_seq=1 time=17.3 ms
+      udpecho_seq=2 time=13.7 ms
+      udpecho_seq=3 time=19.0 ms
+      udpecho_seq=4 time=18.3 ms
+      udpecho_seq=5 time=12.6 ms
+      
+      --- udpecho.example.com udpecho statistics ---
+      5 packets transmitted, 5 packets received, 0.0% packet loss
+      round-trip min/avg/max = 12.6/16.1/19.0 ms
+      $
+
+Example usage (TR-143 UDPEchoPlus compliant):
+
+      $ akcom-udpecho -c 5 --echoplus udpecho.example.com 30006
+      UDPECHO udpecho.example.com:30006 (209.112.131.108:30006): 20 bytes
+      udpecho_seq=1 time=20.9 ms delay=1.5 ms adj_time=19.4 ms
+      udpecho_seq=2 time=17.4 ms delay=2.8 ms adj_time=14.6 ms
+      udpecho_seq=3 time=19.7 ms delay=0.3 ms adj_time=19.4 ms
+      udpecho_seq=4 time=18.7 ms delay=0.7 ms adj_time=18.0 ms
+      udpecho_seq=5 time=14.1 ms delay=2.7 ms adj_time=11.4 ms
+      
+      --- udpecho.example.com udpecho statistics ---
+      5 packets transmitted, 5 packets received, 0.0% packet loss
+      round-trip min/avg/max = 14.1/18.1/20.9 ms
+      adjusted round-trip min/avg/max = 11.4/16.5/19.4 ms
+      $
+
+akcom-udpechod
+--------------
+
+akcom-udpechod is simple UDP echo server.
+
+Example usage (RFC 862 compliant):
+
+      akcom-udpechod \
+         --port 30007 \
+         --pidfile /var/run/akcom-udpecho/akcom-udpecho.pid \
+         --user nobody \
+         --group nobody \
+         --delay=10000 \
+         --drop=10
+
+Example usage (TR-143 UDPEchoPlus compliant):
+
+      akcom-udpechod \
+         --port 30007 \
+         --pidfile /var/run/akcom-udpecho/akcom-udpecho.pid \
+         --echoplus \
+         --user nobody \
+         --group nobody \
+         --delay=10000 \
+         --drop=10 \
+         --echoplus
+
+
 Source Code
 ===========
 
@@ -65,10 +139,12 @@ source code from the git repository.
 
 Browse Source:
 
+   * https://github.com/alaskacommunications/akcom-udpecho/
    * https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git/
 
 Git URLs:
 
+   * https://github.com/alaskacommunications/akcom-udpecho.git
    * https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git
    * scm.prv.acsalaska.net:/pub/scm/ipeng/akcom-udpecho.git
 
@@ -76,19 +152,16 @@ Downloading Source:
 
       $ git clone https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git
 
-Preparing Source:
+Compiling source using basic method:
 
+      $ cd akcom-udpecho/src
+      $ make && make install
 
-Compiling Source using basic method:
+Preparing and compiling source using GNU autotools method:
 
-      $ cd src && make && make install
-
-Compiling Source using GNU autotools method:
-
-      $ cd akcom-udpecho
-      $ ./autogen.sh
-      $ cd build
-      $ ./configure
+      $ cd akcom-udpecho/build
+      $ ../autogen.sh
+      $ ../configure
       $ make && make install
 
 For more information on building and installing using configure, please
