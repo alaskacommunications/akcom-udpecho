@@ -92,6 +92,8 @@ TESTS					=
 XFAIL_TESTS				=
 EXTRA_MANS				=
 EXTRA_DIST				= $(noinst_HEADERS) \
+					  docs/TR-143.pdf \
+					  docs/rfc862.txt \
 					  ChangeLog.md \
 					  NEWS.md \
 					  README.md \
