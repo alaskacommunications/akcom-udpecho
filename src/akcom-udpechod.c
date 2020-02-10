@@ -484,7 +484,7 @@ int my_daemonize(void)
       };
    } else
    {
-      fscanf(fs, "%u", &pid);
+      fscanf(fs, "%i", &pid);
       fclose(fs);
       if ((rc = kill(pid, 0)) == -1)
       {
