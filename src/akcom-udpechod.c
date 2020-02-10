@@ -144,13 +144,14 @@ struct udp_echo_plus
 /////////////////
 #pragma mark - Variables
 
-static int should_stop = 0;
+static int           should_stop     = 0;
 
 static const char  * prog_name       = "a.out";
+
 static const char  * cnf_pidfile     = "/var/run/" PROGRAM_NAME ".pid";
-static uint16_t      cnf_port        = 30006;
-static int           cnf_echoplus    = 0;
-static int           cnf_drop_perct  = 0;
+static uint16_t      cnf_port        = 30006;                            // UDP port number
+static int           cnf_echoplus    = 0;                                // enable echo plus
+static int           cnf_drop_perct  = 0;                                // drop percentage
 static useconds_t    cnf_delay       = 0;                                // Delay range in microseconds
 static int32_t       cnf_verbose     = 0;                                // runtime verbosity
 static int           cnf_facility    = LOG_DAEMON;                       // syslog facility
