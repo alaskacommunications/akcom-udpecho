@@ -148,12 +148,10 @@ static int should_stop = 0;
 
 struct app_config
 {
-   uid_t         uid;          // setuid
    gid_t         gid;          // setgid
 };
 static struct app_config cnf =
 {
-   .uid          = 0,
    .gid          = 0,
 };
 static const char  * prog_name       = "a.out";
@@ -166,6 +164,7 @@ static int32_t       cnf_verbose     = 0;                                // runt
 static int           cnf_facility    = LOG_DAEMON;                       // syslog facility
 static int           cnf_dont_fork   = 0;
 static const char  * cnf_listen      = NULL;                             // IP address to listen for requests
+static uid_t         cnf_uid         = 0;                                // setuid
 
 
 //////////////////
@@ -350,7 +349,7 @@ int main(int argc, char * argv[])
                fprintf(stderr, "%s: getpwnam(): %s\n", prog_name, strerror(errno));
             return(1);
          };
-         cnf.uid = pw->pw_uid;
+         cnf_uid = pw->pw_uid;
          break;
 
          case 'v':
@@ -373,13 +372,13 @@ int main(int argc, char * argv[])
 
    // set defaults for setuid/setgid
    cnf.gid = (cnf.gid == 0) ? getgid() : cnf.gid;
-   cnf.uid = (cnf.uid == 0) ? getuid() : cnf.uid;
+   cnf_uid = (cnf_uid == 0) ? getuid() : cnf_uid;
    if ( (cnf.gid != getgid()) && (getuid() != 0) )
    {
       fprintf(stderr, "%s: setgid requires root access\n", prog_name);
       return(1);
    };
-   if ( (cnf.uid != getuid()) && (getuid() != 0) )
+   if ( (cnf_uid != getuid()) && (getuid() != 0) )
    {
       fprintf(stderr, "%s: setuid requires root access\n", prog_name);
       return(1);
@@ -518,10 +517,10 @@ int my_daemonize(void)
       close(fd);
       return(-1);
    };
-   if ( (cnf.uid != getuid()) ||
+   if ( (cnf_uid != getuid()) ||
         (cnf.gid != getgid()) )
    {
-      if ((rc = fchown(fd, cnf.uid, cnf.gid)) == -1)
+      if ((rc = fchown(fd, cnf_uid, cnf.gid)) == -1)
       {
          my_error("fchown(): %s", strerror(errno));
          close(fd);
@@ -634,7 +633,7 @@ int my_daemonize(void)
       unlink(cnf_pidfile);
       return(-1);
    };
-   if ( (getuid() != cnf.uid) && ((rc = setreuid(cnf.uid, cnf.uid)) == -1) )
+   if ( (getuid() != cnf_uid) && ((rc = setreuid(cnf_uid, cnf_uid)) == -1) )
    {
       my_error("getuid(): %s", strerror(errno));
       close(s);
