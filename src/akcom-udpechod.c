@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   int           facility;     // syslog facility
    int           dont_fork;
    const char  * listen;       // IP address to listen for requests
    uid_t         uid;          // setuid
@@ -156,7 +155,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .facility     = LOG_DAEMON,
    .dont_fork    = 0,
    .listen       = NULL,
    .uid          = 0,
@@ -169,6 +167,7 @@ static int           cnf_echoplus    = 0;
 static int           cnf_drop_perct  = 0;
 static useconds_t    cnf_delay       = 0;                                // Delay range in microseconds
 static int32_t       cnf_verbose     = 0;                                // runtime verbosity
+static int           cnf_facility    = LOG_DAEMON;                       // syslog facility
 
 
 //////////////////
@@ -282,23 +281,23 @@ int main(int argc, char * argv[])
          break;
 
          case 'f':
-         if      (!(strcasecmp(optarg, "auth")))   { cnf.facility = LOG_AUTH; }
-         else if (!(strcasecmp(optarg, "cron")))   { cnf.facility = LOG_CRON; }
-         else if (!(strcasecmp(optarg, "daemon"))) { cnf.facility = LOG_DAEMON; }
-         else if (!(strcasecmp(optarg, "ftp")))    { cnf.facility = LOG_FTP; }
-         else if (!(strcasecmp(optarg, "local0"))) { cnf.facility = LOG_LOCAL0; }
-         else if (!(strcasecmp(optarg, "local1"))) { cnf.facility = LOG_LOCAL1; }
-         else if (!(strcasecmp(optarg, "local2"))) { cnf.facility = LOG_LOCAL2; }
-         else if (!(strcasecmp(optarg, "local3"))) { cnf.facility = LOG_LOCAL3; }
-         else if (!(strcasecmp(optarg, "local4"))) { cnf.facility = LOG_LOCAL4; }
-         else if (!(strcasecmp(optarg, "local5"))) { cnf.facility = LOG_LOCAL5; }
-         else if (!(strcasecmp(optarg, "local6"))) { cnf.facility = LOG_LOCAL6; }
-         else if (!(strcasecmp(optarg, "local7"))) { cnf.facility = LOG_LOCAL7; }
-         else if (!(strcasecmp(optarg, "lpr")))    { cnf.facility = LOG_LPR; }
-         else if (!(strcasecmp(optarg, "mail")))   { cnf.facility = LOG_MAIL; }
-         else if (!(strcasecmp(optarg, "news")))   { cnf.facility = LOG_NEWS; }
-         else if (!(strcasecmp(optarg, "uucp")))   { cnf.facility = LOG_UUCP; }
-         else if (!(strcasecmp(optarg, "user")))   { cnf.facility = LOG_USER; }
+         if      (!(strcasecmp(optarg, "auth")))   { cnf_facility = LOG_AUTH; }
+         else if (!(strcasecmp(optarg, "cron")))   { cnf_facility = LOG_CRON; }
+         else if (!(strcasecmp(optarg, "daemon"))) { cnf_facility = LOG_DAEMON; }
+         else if (!(strcasecmp(optarg, "ftp")))    { cnf_facility = LOG_FTP; }
+         else if (!(strcasecmp(optarg, "local0"))) { cnf_facility = LOG_LOCAL0; }
+         else if (!(strcasecmp(optarg, "local1"))) { cnf_facility = LOG_LOCAL1; }
+         else if (!(strcasecmp(optarg, "local2"))) { cnf_facility = LOG_LOCAL2; }
+         else if (!(strcasecmp(optarg, "local3"))) { cnf_facility = LOG_LOCAL3; }
+         else if (!(strcasecmp(optarg, "local4"))) { cnf_facility = LOG_LOCAL4; }
+         else if (!(strcasecmp(optarg, "local5"))) { cnf_facility = LOG_LOCAL5; }
+         else if (!(strcasecmp(optarg, "local6"))) { cnf_facility = LOG_LOCAL6; }
+         else if (!(strcasecmp(optarg, "local7"))) { cnf_facility = LOG_LOCAL7; }
+         else if (!(strcasecmp(optarg, "lpr")))    { cnf_facility = LOG_LPR; }
+         else if (!(strcasecmp(optarg, "mail")))   { cnf_facility = LOG_MAIL; }
+         else if (!(strcasecmp(optarg, "news")))   { cnf_facility = LOG_NEWS; }
+         else if (!(strcasecmp(optarg, "uucp")))   { cnf_facility = LOG_UUCP; }
+         else if (!(strcasecmp(optarg, "user")))   { cnf_facility = LOG_USER; }
          else
          {
             my_usage_error("invalid or unsupported syslog facility -- `%s'", optarg);
@@ -675,7 +674,7 @@ int my_daemonize(void)
    close(fd);
 
    // opens syslog
-   openlog(prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf.facility);
+   openlog(prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf_facility);
    syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
    syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf_echoplus)) ? "yes" : "no");
    syslog(LOG_NOTICE, "random delay: %u us", cnf_delay);
