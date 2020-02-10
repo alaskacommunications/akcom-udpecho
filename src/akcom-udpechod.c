@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   uint16_t      echoplus;     // enable echo plus
    int           drop_perct;   // drop percentage
    useconds_t    delay;        // Delay range in microseconds
    int32_t       verbose;      // runtime verbosity
@@ -160,7 +159,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .echoplus     = 0,
    .drop_perct   = 0,
    .delay        = 0,
    .verbose      = 0,
@@ -173,6 +171,7 @@ static struct app_config cnf =
 static const char  * prog_name       = "a.out";
 static const char  * cnf_pidfile     = "/var/run/" PROGRAM_NAME ".pid";
 static uint16_t      cnf_port        = 30006;
+static int           cnf_echoplus    = 0;
 
 
 //////////////////
@@ -282,7 +281,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'e':
-         cnf.echoplus = 1;
+         cnf_echoplus = 1;
          break;
 
          case 'f':
@@ -344,7 +343,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'r':
-         cnf.echoplus = 0;
+         cnf_echoplus = 0;
          break;
 
          case 'u':
@@ -681,7 +680,7 @@ int my_daemonize(void)
    // opens syslog
    openlog(prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf.facility);
    syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
-   syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf.echoplus)) ? "yes" : "no");
+   syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf_echoplus)) ? "yes" : "no");
    syslog(LOG_NOTICE, "random delay: %u us", cnf.delay);
    syslog(LOG_NOTICE, "drop probability: %u%%", cnf.drop_perct);
    syslog(LOG_NOTICE, "running as UID: %u", getuid());
@@ -766,7 +765,7 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
    };
 
    // log connection
-   if ((cnf.echoplus))
+   if ((cnf_echoplus))
    {
       syslog(LOG_INFO,
          "conn %zu: client: [%s]:%hu; %s bytes: %zi; timestamp: %lu.%09lu; seq: %u; delta: %u us; delay: %u us;",
@@ -849,7 +848,7 @@ int my_loop(int s, size_t * connp)
    my_log_conn(MY_RECV, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
 
    // process echo+ packet
-   if ((cnf.echoplus))
+   if ((cnf_echoplus))
    {
       syslog(LOG_DEBUG, "conn %zu: intializing echo plus header", *connp);
       udpbuff.msg.res_sn    = udpbuff.msg.req_sn;
@@ -884,7 +883,7 @@ int my_loop(int s, size_t * connp)
    us += (uint64_t)ts.tv_nsec / 1000;
 
    // send response
-   if ((cnf.echoplus))
+   if ((cnf_echoplus))
    {
       syslog(LOG_DEBUG, "conn %zu: updating echo plus header", *connp);
       udpbuff.msg.reply_time = htonl(us & 0xFFFFFFFFLL);
@@ -914,7 +913,7 @@ void my_usage(void)
    printf("OPTIONS:\n");
    printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
    printf("  -D usec, --delay=usec     set echo delay range to microseconds (default: %u us)\n", cnf.delay);
-   printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf.echoplus)) ? " (default)" : "");
+   printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf_echoplus)) ? " (default)" : "");
    printf("  -f str,  --facility=str   set syslog facility (default: daemon)\n");
    printf("  -g gid,  --group=gid      setgid to gid (default: none)\n");
    printf("  -h,      --help           print this help and exit\n");
@@ -922,7 +921,7 @@ void my_usage(void)
    printf("  -n,      --foreground     do not fork\n");
    printf("  -p port, --port=port      list on port number (default: %u)\n", cnf_port);
    printf("  -P file, --pidfile=file   PID file (default: %s)\n", cnf_pidfile);
-   printf("  -r,      --rfc            RFC compliant echo protocol%s\n", (!(cnf.echoplus)) ? " (default)" : "");
+   printf("  -r,      --rfc            RFC compliant echo protocol%s\n", (!(cnf_echoplus)) ? " (default)" : "");
    printf("  -u uid,  --user=uid       setuid to uid (default: none)\n");
    printf("  -v,      --verbose        enable verbose output\n");
    printf("  -V,      --version        print version number and exit\n");
