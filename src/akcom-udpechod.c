@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   const char  * prog_name;
    const char  * pidfile;
    uint16_t      port;         // UDP port number
    uint16_t      echoplus;     // enable echo plus
@@ -163,7 +162,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .prog_name    = "a.out",
    .pidfile      = "/var/run/" PROGRAM_NAME ".pid",
    .port         = 30006,
    .echoplus     = 0,
@@ -176,6 +174,7 @@ static struct app_config cnf =
    .uid          = 0,
    .gid          = 0,
 };
+static const char  * prog_name       = "a.out";
 
 
 //////////////////
@@ -257,9 +256,9 @@ int main(int argc, char * argv[])
    };
 
    // determines program name
-   cnf.prog_name = argv[0];
+   prog_name = argv[0];
    if ((ptr = rindex(argv[0], '/')) != NULL)
-      cnf.prog_name = &ptr[1];
+      prog_name = &ptr[1];
 
    // process arguments
    //while ((c = getopt(argc, argv, "d:D:eEhnp:P:vV")) != -1)
@@ -318,9 +317,9 @@ int main(int argc, char * argv[])
          if ((gr = getgrnam(optarg)) == NULL)
          {
             if (errno == 0)
-               fprintf(stderr, "%s: invalid group specified\n", cnf.prog_name);
+               fprintf(stderr, "%s: invalid group specified\n", prog_name);
             else
-               fprintf(stderr, "%s: getgrnam(): %s\n", cnf.prog_name, strerror(errno));
+               fprintf(stderr, "%s: getgrnam(): %s\n", prog_name, strerror(errno));
             return(1);
          };
          cnf.gid = gr->gr_gid;
@@ -355,9 +354,9 @@ int main(int argc, char * argv[])
          if ((pw = getpwnam(optarg)) == NULL)
          {
             if (errno == 0)
-               fprintf(stderr, "%s: invalid user specified\n", cnf.prog_name);
+               fprintf(stderr, "%s: invalid user specified\n", prog_name);
             else
-               fprintf(stderr, "%s: getpwnam(): %s\n", cnf.prog_name, strerror(errno));
+               fprintf(stderr, "%s: getpwnam(): %s\n", prog_name, strerror(errno));
             return(1);
          };
          cnf.uid = pw->pw_uid;
@@ -368,11 +367,11 @@ int main(int argc, char * argv[])
          break;
 
          case 'V':
-         printf("%s (%s) %s\n", cnf.prog_name, PACKAGE_NAME, PACKAGE_VERSION);
+         printf("%s (%s) %s\n", prog_name, PACKAGE_NAME, PACKAGE_VERSION);
          return(0);
 
          case '?':
-         fprintf(stderr, "Try `%s --help' for more information.\n", cnf.prog_name);
+         fprintf(stderr, "Try `%s --help' for more information.\n", prog_name);
          return(1);
 
          default:
@@ -386,12 +385,12 @@ int main(int argc, char * argv[])
    cnf.uid = (cnf.uid == 0) ? getuid() : cnf.uid;
    if ( (cnf.gid != getgid()) && (getuid() != 0) )
    {
-      fprintf(stderr, "%s: setgid requires root access\n", cnf.prog_name);
+      fprintf(stderr, "%s: setgid requires root access\n", prog_name);
       return(1);
    };
    if ( (cnf.uid != getuid()) && (getuid() != 0) )
    {
-      fprintf(stderr, "%s: setuid requires root access\n", cnf.prog_name);
+      fprintf(stderr, "%s: setuid requires root access\n", prog_name);
       return(1);
    };
 
@@ -682,7 +681,7 @@ int my_daemonize(void)
    close(fd);
 
    // opens syslog
-   openlog(cnf.prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf.facility);
+   openlog(prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf.facility);
    syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
    syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf.echoplus)) ? "yes" : "no");
    syslog(LOG_NOTICE, "random delay: %u us", cnf.delay);
@@ -703,7 +702,7 @@ void my_debug(const char * fmt, ...)
    if (!(cnf.verbose))
       return;
 
-   printf("%s: ", cnf.prog_name);
+   printf("%s: ", prog_name);
 
    va_start(args, fmt);
    vprintf(fmt, args);
@@ -720,7 +719,7 @@ void my_error(const char * fmt, ...)
 {
    va_list args;
 
-   fprintf(stderr, "%s: error: ", cnf.prog_name);
+   fprintf(stderr, "%s: error: ", prog_name);
 
    va_start(args, fmt);
    vfprintf(stderr, fmt, args);
@@ -913,7 +912,7 @@ void my_sighandler(int signum)
 // display program usage
 void my_usage(void)
 {
-   printf("Usage: %s [options]\n", cnf.prog_name);
+   printf("Usage: %s [options]\n", prog_name);
    printf("OPTIONS:\n");
    printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
    printf("  -D usec, --delay=usec     set echo delay range to microseconds (default: %u us)\n", cnf.delay);
@@ -939,13 +938,13 @@ void my_usage_error(const char * fmt, ...)
 {
    va_list args;
 
-   fprintf(stderr, "%s: ", cnf.prog_name);
+   fprintf(stderr, "%s: ", prog_name);
 
    va_start(args, fmt);
    vfprintf(stderr, fmt, args);
    va_end(args);
 
-   fprintf(stderr, "\nTry `%s --help' for more information.\n", cnf.prog_name);
+   fprintf(stderr, "\nTry `%s --help' for more information.\n", prog_name);
 
    return;
 }
