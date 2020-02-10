@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   const char  * pidfile;
    uint16_t      port;         // UDP port number
    uint16_t      echoplus;     // enable echo plus
    int           drop_perct;   // drop percentage
@@ -162,7 +161,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .pidfile      = "/var/run/" PROGRAM_NAME ".pid",
    .port         = 30006,
    .echoplus     = 0,
    .drop_perct   = 0,
@@ -175,6 +173,7 @@ static struct app_config cnf =
    .gid          = 0,
 };
 static const char  * prog_name       = "a.out";
+static const char  * cnf_pidfile     = "/var/run/" PROGRAM_NAME ".pid";
 
 
 //////////////////
@@ -342,7 +341,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'P':
-         cnf.pidfile = optarg;
+         cnf_pidfile = optarg;
          break;
 
          case 'r':
@@ -434,7 +433,7 @@ int main(int argc, char * argv[])
    // close syslog
    syslog(LOG_NOTICE, "daemon stopping");
    close(s);
-   unlink(cnf.pidfile);
+   unlink(cnf_pidfile);
    closelog();
 
    return(0);
@@ -466,15 +465,15 @@ int my_daemonize(void)
 
    // check for existing instance
    fs = NULL;
-   my_debug("checking for existing PID file (%s)", cnf.pidfile);
-   if ((rc = stat(cnf.pidfile, &sb)) == -1)
+   my_debug("checking for existing PID file (%s)", cnf_pidfile);
+   if ((rc = stat(cnf_pidfile, &sb)) == -1)
    {
       if (errno != ENOENT)
       {
          my_error("stat(): %s", strerror(errno));
          return(-1);
       };
-   } else if ((fs = fopen(cnf.pidfile, "r")) == NULL)
+   } else if ((fs = fopen(cnf_pidfile, "r")) == NULL)
    {
       if (errno != ENOENT)
       {
@@ -490,7 +489,7 @@ int my_daemonize(void)
          if (errno == ESRCH)
          {
             my_debug("removing stale PID file");
-            unlink(cnf.pidfile);
+            unlink(cnf_pidfile);
          } else
          {
             my_error("kill(): %s", strerror(errno));
@@ -505,7 +504,7 @@ int my_daemonize(void)
 
    // create PID file
    my_debug("creating PID file");
-   strncpy(pidfile, cnf.pidfile, sizeof(pidfile)-7);
+   strncpy(pidfile, cnf_pidfile, sizeof(pidfile)-7);
    strcat(pidfile, "XXXXXX");
    if ((fd = mkstemp(pidfile)) == -1)
    {
@@ -513,7 +512,7 @@ int my_daemonize(void)
       return(-1);
    };
    my_debug("temp pidfile: %s", pidfile);
-   if ((rc = link(pidfile, cnf.pidfile)) == -1)
+   if ((rc = link(pidfile, cnf_pidfile)) == -1)
    {
       my_error("mkstemp(): %s", strerror(errno));
       close(fd);
@@ -537,7 +536,7 @@ int my_daemonize(void)
          return(-1);
       };
    };
-   my_debug("pidfile: %s", cnf.pidfile);
+   my_debug("pidfile: %s", cnf_pidfile);
 
    // determines interface on which to listen
    bzero(&sa, sizeof(sa));
@@ -566,7 +565,7 @@ int my_daemonize(void)
          else
             my_error("invalid address specified with `-l'");
          close(fd);
-         unlink(cnf.pidfile);
+         unlink(cnf_pidfile);
          return(-1);
       };
    };
@@ -577,7 +576,7 @@ int my_daemonize(void)
    {
       my_error("socket(): %s", strerror(errno));
       close(fd);
-      unlink(cnf.pidfile);
+      unlink(cnf_pidfile);
       return(-1);
    };
 
@@ -589,7 +588,7 @@ int my_daemonize(void)
       my_error("setsockopt(SO_REUSEADDR): %s", strerror(errno));
       close(s);
       close(fd);
-      unlink(cnf.pidfile);
+      unlink(cnf_pidfile);
       return(-1);
    };
 
@@ -600,7 +599,7 @@ int my_daemonize(void)
       my_error("bind(): %s", strerror(errno));
       close(s);
       close(fd);
-      unlink(cnf.pidfile);
+      unlink(cnf_pidfile);
       return(-1);
    };
 
@@ -611,7 +610,7 @@ int my_daemonize(void)
       my_error("getsockname(): %s", strerror(errno));
       close(s);
       close(fd);
-      unlink(cnf.pidfile);
+      unlink(cnf_pidfile);
       return(-1);
    };
    switch(sa.ss.ss_family)
@@ -630,7 +629,7 @@ int my_daemonize(void)
       my_error("listening socket has invalid address family: %i\n", sa.sa.sa_family);
       close(s);
       close(fd);
-      unlink(cnf.pidfile);
+      unlink(cnf_pidfile);
       return(-1);
    };
 
@@ -640,7 +639,7 @@ int my_daemonize(void)
       my_error("getgid(): %s", strerror(errno));
       close(s);
       close(fd);
-      unlink(cnf.pidfile);
+      unlink(cnf_pidfile);
       return(-1);
    };
    if ( (getuid() != cnf.uid) && ((rc = setreuid(cnf.uid, cnf.uid)) == -1) )
@@ -648,7 +647,7 @@ int my_daemonize(void)
       my_error("getuid(): %s", strerror(errno));
       close(s);
       close(fd);
-      unlink(cnf.pidfile);
+      unlink(cnf_pidfile);
       return(-1);
    };
 
@@ -923,7 +922,7 @@ void my_usage(void)
    printf("  -l addr, --listen=addr    bind to IP address (default: all)\n");
    printf("  -n,      --foreground     do not fork\n");
    printf("  -p port, --port=port      list on port number (default: %u)\n", cnf.port);
-   printf("  -P file, --pidfile=file   PID file (default: %s)\n", cnf.pidfile);
+   printf("  -P file, --pidfile=file   PID file (default: %s)\n", cnf_pidfile);
    printf("  -r,      --rfc            RFC compliant echo protocol%s\n", (!(cnf.echoplus)) ? " (default)" : "");
    printf("  -u uid,  --user=uid       setuid to uid (default: none)\n");
    printf("  -v,      --verbose        enable verbose output\n");
