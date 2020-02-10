@@ -148,14 +148,12 @@ static int should_stop = 0;
 
 struct app_config
 {
-   int           dont_fork;
    const char  * listen;       // IP address to listen for requests
    uid_t         uid;          // setuid
    gid_t         gid;          // setgid
 };
 static struct app_config cnf =
 {
-   .dont_fork    = 0,
    .listen       = NULL,
    .uid          = 0,
    .gid          = 0,
@@ -168,6 +166,7 @@ static int           cnf_drop_perct  = 0;
 static useconds_t    cnf_delay       = 0;                                // Delay range in microseconds
 static int32_t       cnf_verbose     = 0;                                // runtime verbosity
 static int           cnf_facility    = LOG_DAEMON;                       // syslog facility
+static int           cnf_dont_fork   = 0;
 
 
 //////////////////
@@ -327,7 +326,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'n':
-         cnf.dont_fork = 1;
+         cnf_dont_fork = 1;
          break;
 
          case 'p':
@@ -646,7 +645,7 @@ int my_daemonize(void)
    };
 
    // fork process
-   if (!(cnf.dont_fork))
+   if (!(cnf_dont_fork))
    {
       my_debug("forking process");
       switch(pid = fork())
@@ -674,7 +673,7 @@ int my_daemonize(void)
    close(fd);
 
    // opens syslog
-   openlog(prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf_facility);
+   openlog(prog_name, LOG_PID | (((cnf_dont_fork)) ? LOG_PERROR : 0), cnf_facility);
    syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
    syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf_echoplus)) ? "yes" : "no");
    syslog(LOG_NOTICE, "random delay: %u us", cnf_delay);
