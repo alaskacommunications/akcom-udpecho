@@ -146,14 +146,6 @@ struct udp_echo_plus
 
 static int should_stop = 0;
 
-struct app_config
-{
-   gid_t         gid;          // setgid
-};
-static struct app_config cnf =
-{
-   .gid          = 0,
-};
 static const char  * prog_name       = "a.out";
 static const char  * cnf_pidfile     = "/var/run/" PROGRAM_NAME ".pid";
 static uint16_t      cnf_port        = 30006;
@@ -165,6 +157,7 @@ static int           cnf_facility    = LOG_DAEMON;                       // sysl
 static int           cnf_dont_fork   = 0;
 static const char  * cnf_listen      = NULL;                             // IP address to listen for requests
 static uid_t         cnf_uid         = 0;                                // setuid
+static gid_t         cnf_gid         = 0;                                // setgid
 
 
 //////////////////
@@ -312,7 +305,7 @@ int main(int argc, char * argv[])
                fprintf(stderr, "%s: getgrnam(): %s\n", prog_name, strerror(errno));
             return(1);
          };
-         cnf.gid = gr->gr_gid;
+         cnf_gid = gr->gr_gid;
          break;
 
          case 'h':
@@ -371,9 +364,9 @@ int main(int argc, char * argv[])
    };
 
    // set defaults for setuid/setgid
-   cnf.gid = (cnf.gid == 0) ? getgid() : cnf.gid;
+   cnf_gid = (cnf_gid == 0) ? getgid() : cnf_gid;
    cnf_uid = (cnf_uid == 0) ? getuid() : cnf_uid;
-   if ( (cnf.gid != getgid()) && (getuid() != 0) )
+   if ( (cnf_gid != getgid()) && (getuid() != 0) )
    {
       fprintf(stderr, "%s: setgid requires root access\n", prog_name);
       return(1);
@@ -518,9 +511,9 @@ int my_daemonize(void)
       return(-1);
    };
    if ( (cnf_uid != getuid()) ||
-        (cnf.gid != getgid()) )
+        (cnf_gid != getgid()) )
    {
-      if ((rc = fchown(fd, cnf_uid, cnf.gid)) == -1)
+      if ((rc = fchown(fd, cnf_uid, cnf_gid)) == -1)
       {
          my_error("fchown(): %s", strerror(errno));
          close(fd);
@@ -625,7 +618,7 @@ int my_daemonize(void)
    };
 
    // change ownership
-   if ( (getgid() != cnf.gid) && ((rc = setregid(cnf.gid, cnf.gid)) == -1) )
+   if ( (getgid() != cnf_gid) && ((rc = setregid(cnf_gid, cnf_gid)) == -1) )
    {
       my_error("getgid(): %s", strerror(errno));
       close(s);
