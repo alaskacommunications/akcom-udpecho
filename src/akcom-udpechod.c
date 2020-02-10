@@ -148,13 +148,11 @@ static int should_stop = 0;
 
 struct app_config
 {
-   const char  * listen;       // IP address to listen for requests
    uid_t         uid;          // setuid
    gid_t         gid;          // setgid
 };
 static struct app_config cnf =
 {
-   .listen       = NULL,
    .uid          = 0,
    .gid          = 0,
 };
@@ -167,6 +165,7 @@ static useconds_t    cnf_delay       = 0;                                // Dela
 static int32_t       cnf_verbose     = 0;                                // runtime verbosity
 static int           cnf_facility    = LOG_DAEMON;                       // syslog facility
 static int           cnf_dont_fork   = 0;
+static const char  * cnf_listen      = NULL;                             // IP address to listen for requests
 
 
 //////////////////
@@ -322,7 +321,7 @@ int main(int argc, char * argv[])
          return(0);
 
          case 'l':
-         cnf.listen = optarg;
+         cnf_listen = optarg;
          break;
 
          case 'n':
@@ -533,7 +532,7 @@ int my_daemonize(void)
 
    // determines interface on which to listen
    bzero(&sa, sizeof(sa));
-   if (!(cnf.listen))
+   if (!(cnf_listen))
    {
       sa.sin6.sin6_family = AF_INET6;
       sa.sin6.sin6_addr   = in6addr_any;
@@ -541,12 +540,12 @@ int my_daemonize(void)
       socklen             = sizeof(struct sockaddr_in6);
    } else
    {
-      if ((rc = inet_pton(AF_INET, cnf.listen, &sa.sin.sin_addr)) == 1)
+      if ((rc = inet_pton(AF_INET, cnf_listen, &sa.sin.sin_addr)) == 1)
       {
          sa.sin.sin_family   = AF_INET;
          sa.sin.sin_port     = htons(cnf_port);
          socklen             = sizeof(struct sockaddr_in);
-      } else if ((rc = inet_pton(AF_INET6, cnf.listen, &sa.sin6.sin6_addr)) == 1)
+      } else if ((rc = inet_pton(AF_INET6, cnf_listen, &sa.sin6.sin6_addr)) == 1)
       {
          sa.sin6.sin6_family = AF_INET6;
          sa.sin6.sin6_port   = htons(cnf_port);
