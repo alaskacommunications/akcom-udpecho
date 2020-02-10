@@ -190,7 +190,7 @@ AC_BINDLE(contrib/bindletools)
 AC_BINDLE_GIT_PACKAGE_VERSION([contrib/bindletools/build-aux/git-package-version.sh])
 
 # custom configure options
-AC_BINDLE_ENABLE_WARNINGS([-Wno-padded -Wno-unknown-pragmas], [-Wpadded])
+AC_BINDLE_ENABLE_WARNINGS([-Wno-missing-format-attribute -Wno-padded -Wno-unknown-pragmas], [-Wpadded])
 
 # Creates outputs
 AC_CONFIG_FILES([Makefile])
