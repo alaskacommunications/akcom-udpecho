@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   int32_t       verbose;      // runtime verbosity
    int           facility;     // syslog facility
    int           dont_fork;
    const char  * listen;       // IP address to listen for requests
@@ -157,7 +156,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .verbose      = 0,
    .facility     = LOG_DAEMON,
    .dont_fork    = 0,
    .listen       = NULL,
@@ -170,6 +168,7 @@ static uint16_t      cnf_port        = 30006;
 static int           cnf_echoplus    = 0;
 static int           cnf_drop_perct  = 0;
 static useconds_t    cnf_delay       = 0;                                // Delay range in microseconds
+static int32_t       cnf_verbose     = 0;                                // runtime verbosity
 
 
 //////////////////
@@ -358,7 +357,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'v':
-         cnf.verbose++;
+         cnf_verbose++;
          break;
 
          case 'V':
@@ -694,7 +693,7 @@ void my_debug(const char * fmt, ...)
 {
    va_list args;
 
-   if (!(cnf.verbose))
+   if (!(cnf_verbose))
       return;
 
    printf("%s: ", prog_name);
@@ -822,7 +821,7 @@ int my_loop(int s, size_t * connp)
    fds[0].fd      = s;
    fds[0].events  = POLLIN;
    fds[0].revents = 0;
-   if (cnf.verbose > 1)
+   if (cnf_verbose > 1)
       syslog(LOG_DEBUG, "waiting for echo request");
    if ((poll(fds, 1, 5000)) < 1)
       return(0);
