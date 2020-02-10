@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   useconds_t    delay;        // Delay range in microseconds
    int32_t       verbose;      // runtime verbosity
    int           facility;     // syslog facility
    int           dont_fork;
@@ -158,7 +157,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .delay        = 0,
    .verbose      = 0,
    .facility     = LOG_DAEMON,
    .dont_fork    = 0,
@@ -171,6 +169,7 @@ static const char  * cnf_pidfile     = "/var/run/" PROGRAM_NAME ".pid";
 static uint16_t      cnf_port        = 30006;
 static int           cnf_echoplus    = 0;
 static int           cnf_drop_perct  = 0;
+static useconds_t    cnf_delay       = 0;                                // Delay range in microseconds
 
 
 //////////////////
@@ -276,7 +275,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'D':
-         cnf.delay = (useconds_t)atoll(optarg);
+         cnf_delay = (useconds_t)atoll(optarg);
          break;
 
          case 'e':
@@ -680,7 +679,7 @@ int my_daemonize(void)
    openlog(prog_name, LOG_PID | (((cnf.dont_fork)) ? LOG_PERROR : 0), cnf.facility);
    syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
    syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf_echoplus)) ? "yes" : "no");
-   syslog(LOG_NOTICE, "random delay: %u us", cnf.delay);
+   syslog(LOG_NOTICE, "random delay: %u us", cnf_delay);
    syslog(LOG_NOTICE, "drop probability: %u%%", cnf_drop_perct);
    syslog(LOG_NOTICE, "running as UID: %u", getuid());
    syslog(LOG_NOTICE, "running as GID: %u", getgid());
@@ -867,9 +866,9 @@ int my_loop(int s, size_t * connp)
 
    // insert random delay
    delay = 0;
-   if (cnf.delay > 0)
+   if (cnf_delay > 0)
    {
-      delay = (useconds_t)rand() % cnf.delay;
+      delay = (useconds_t)rand() % cnf_delay;
       syslog(LOG_DEBUG, "conn %zu: delaying response for %i us", *connp, delay);
       usleep(delay);
    };
@@ -911,7 +910,7 @@ void my_usage(void)
    printf("Usage: %s [options]\n", prog_name);
    printf("OPTIONS:\n");
    printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf_drop_perct);
-   printf("  -D usec, --delay=usec     set echo delay range to microseconds (default: %u us)\n", cnf.delay);
+   printf("  -D usec, --delay=usec     set echo delay range to microseconds (default: %u us)\n", cnf_delay);
    printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf_echoplus)) ? " (default)" : "");
    printf("  -f str,  --facility=str   set syslog facility (default: daemon)\n");
    printf("  -g gid,  --group=gid      setgid to gid (default: none)\n");
