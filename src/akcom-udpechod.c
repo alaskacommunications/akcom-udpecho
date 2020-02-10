@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   uint16_t      port;         // UDP port number
    uint16_t      echoplus;     // enable echo plus
    int           drop_perct;   // drop percentage
    useconds_t    delay;        // Delay range in microseconds
@@ -161,7 +160,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .port         = 30006,
    .echoplus     = 0,
    .drop_perct   = 0,
    .delay        = 0,
@@ -174,6 +172,7 @@ static struct app_config cnf =
 };
 static const char  * prog_name       = "a.out";
 static const char  * cnf_pidfile     = "/var/run/" PROGRAM_NAME ".pid";
+static uint16_t      cnf_port        = 30006;
 
 
 //////////////////
@@ -337,7 +336,7 @@ int main(int argc, char * argv[])
          break;
 
          case 'p':
-         cnf.port = (uint16_t)(atoi(optarg) & 0xffff);
+         cnf_port = (uint16_t)(atoi(optarg) & 0xffff);
          break;
 
          case 'P':
@@ -544,19 +543,19 @@ int my_daemonize(void)
    {
       sa.sin6.sin6_family = AF_INET6;
       sa.sin6.sin6_addr   = in6addr_any;
-      sa.sin6.sin6_port   = htons(cnf.port);
+      sa.sin6.sin6_port   = htons(cnf_port);
       socklen             = sizeof(struct sockaddr_in6);
    } else
    {
       if ((rc = inet_pton(AF_INET, cnf.listen, &sa.sin.sin_addr)) == 1)
       {
          sa.sin.sin_family   = AF_INET;
-         sa.sin.sin_port     = htons(cnf.port);
+         sa.sin.sin_port     = htons(cnf_port);
          socklen             = sizeof(struct sockaddr_in);
       } else if ((rc = inet_pton(AF_INET6, cnf.listen, &sa.sin6.sin6_addr)) == 1)
       {
          sa.sin6.sin6_family = AF_INET6;
-         sa.sin6.sin6_port   = htons(cnf.port);
+         sa.sin6.sin6_port   = htons(cnf_port);
          socklen             = sizeof(struct sockaddr_in6);
       } else
       {
@@ -921,7 +920,7 @@ void my_usage(void)
    printf("  -h,      --help           print this help and exit\n");
    printf("  -l addr, --listen=addr    bind to IP address (default: all)\n");
    printf("  -n,      --foreground     do not fork\n");
-   printf("  -p port, --port=port      list on port number (default: %u)\n", cnf.port);
+   printf("  -p port, --port=port      list on port number (default: %u)\n", cnf_port);
    printf("  -P file, --pidfile=file   PID file (default: %s)\n", cnf_pidfile);
    printf("  -r,      --rfc            RFC compliant echo protocol%s\n", (!(cnf.echoplus)) ? " (default)" : "");
    printf("  -u uid,  --user=uid       setuid to uid (default: none)\n");
