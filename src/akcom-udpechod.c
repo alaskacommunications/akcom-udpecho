@@ -148,7 +148,6 @@ static int should_stop = 0;
 
 struct app_config
 {
-   int           drop_perct;   // drop percentage
    useconds_t    delay;        // Delay range in microseconds
    int32_t       verbose;      // runtime verbosity
    int           facility;     // syslog facility
@@ -159,7 +158,6 @@ struct app_config
 };
 static struct app_config cnf =
 {
-   .drop_perct   = 0,
    .delay        = 0,
    .verbose      = 0,
    .facility     = LOG_DAEMON,
@@ -172,6 +170,7 @@ static const char  * prog_name       = "a.out";
 static const char  * cnf_pidfile     = "/var/run/" PROGRAM_NAME ".pid";
 static uint16_t      cnf_port        = 30006;
 static int           cnf_echoplus    = 0;
+static int           cnf_drop_perct  = 0;
 
 
 //////////////////
@@ -268,8 +267,8 @@ int main(int argc, char * argv[])
          break;
 
          case 'd':
-         cnf.drop_perct = atoi(optarg);
-         if ((cnf.drop_perct < 0) || (cnf.drop_perct > 99))
+         cnf_drop_perct = atoi(optarg);
+         if ((cnf_drop_perct < 0) || (cnf_drop_perct > 99))
          {
             my_usage_error("invalid value for `-d'");
             return(1);
@@ -682,7 +681,7 @@ int my_daemonize(void)
    syslog(LOG_NOTICE, "%s v%s", PROGRAM_NAME, PACKAGE_VERSION);
    syslog(LOG_NOTICE, "echo plus enabled: %s", ((cnf_echoplus)) ? "yes" : "no");
    syslog(LOG_NOTICE, "random delay: %u us", cnf.delay);
-   syslog(LOG_NOTICE, "drop probability: %u%%", cnf.drop_perct);
+   syslog(LOG_NOTICE, "drop probability: %u%%", cnf_drop_perct);
    syslog(LOG_NOTICE, "running as UID: %u", getuid());
    syslog(LOG_NOTICE, "running as GID: %u", getgid());
    syslog(LOG_NOTICE, "listening on [%s]:%hu", addr_str, port);
@@ -857,9 +856,9 @@ int my_loop(int s, size_t * connp)
    };
 
    // randomly drop packets
-   if (cnf.drop_perct > 0)
+   if (cnf_drop_perct > 0)
    {
-      if ( (rand() % 100) < cnf.drop_perct)
+      if ( (rand() % 100) < cnf_drop_perct)
       {
          my_log_conn(MY_DROP, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
          return(0);
@@ -911,7 +910,7 @@ void my_usage(void)
 {
    printf("Usage: %s [options]\n", prog_name);
    printf("OPTIONS:\n");
-   printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf.drop_perct);
+   printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf_drop_perct);
    printf("  -D usec, --delay=usec     set echo delay range to microseconds (default: %u us)\n", cnf.delay);
    printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf_echoplus)) ? " (default)" : "");
    printf("  -f str,  --facility=str   set syslog facility (default: daemon)\n");
