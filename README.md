@@ -139,18 +139,18 @@ source code from the git repository.
 
 Browse Source:
 
-   * https://github.com/alaskacommunications/akcom-udpecho/
-   * https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git/
+   * https://github.com/alaskacommunications/akcom-udpecho/ (public repoisitory)
+   * https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git/ (internal repository)
 
 Git URLs:
 
-   * https://github.com/alaskacommunications/akcom-udpecho.git
-   * https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git
-   * scm.prv.acsalaska.net:/pub/scm/ipeng/akcom-udpecho.git
+   * https://github.com/alaskacommunications/akcom-udpecho.git (public repoisitory)
+   * https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git (internal repository)
+   * scm.prv.acsalaska.net:/pub/scm/ipeng/akcom-udpecho.git (internal repository)
 
 Downloading Source:
 
-      $ git clone https://scm.prv.acsalaska.net/pub/scm/ipeng/akcom-udpecho.git
+      $ git clone https://github.com/alaskacommunications/akcom-udpecho/
 
 Compiling source using basic method:
 
