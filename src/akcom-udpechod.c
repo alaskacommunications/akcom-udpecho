@@ -802,12 +802,6 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
       );
    };
 
-   // log if IPv4 address mapped to IPv6
-   if (sap->ss.ss_family == AF_INET6)
-      if (mode == MY_RECV)
-         if (IN6_IS_ADDR_V4MAPPED(&sap->sin6.sin6_addr) != 0)
-            syslog(LOG_INFO, "conn %zu: client: [%s]:%hu; IPv4 mapped address", *connp, addr_str, port);
-
    return(0);
 }
 
@@ -841,13 +835,11 @@ int my_loop(int s, size_t * connp)
    (*connp)++;
 
    // read data
-   syslog(LOG_DEBUG, "conn %zu: reading data", *connp);
    sinlen = sizeof(struct sockaddr_storage);
    if ((ssize = recvfrom(s, udpbuff.bytes, sizeof(udpbuff), 0, &sa.sa, &sinlen)) == -1)
       return(-1);
 
    // grab timestamp
-   syslog(LOG_DEBUG, "conn %zu: calculating recv timestamp", *connp);
    clock_gettime(CLOCK_REALTIME, &ts);
    us  = (uint64_t)(ts.tv_sec * 1000000);
    us += (uint64_t)ts.tv_nsec / 1000;
@@ -858,7 +850,6 @@ int my_loop(int s, size_t * connp)
    // process echo+ packet
    if ((cnf_echoplus))
    {
-      syslog(LOG_DEBUG, "conn %zu: intializing echo plus header", *connp);
       udpbuff.msg.res_sn    = udpbuff.msg.req_sn;
       udpbuff.msg.recv_time = htonl(us & 0xFFFFFFFFLL);
       udpbuff.msg.failures  = 0;
@@ -879,12 +870,10 @@ int my_loop(int s, size_t * connp)
    if (cnf_delay > 0)
    {
       delay = (useconds_t)rand() % cnf_delay;
-      syslog(LOG_DEBUG, "conn %zu: delaying response for %i us", *connp, delay);
       usleep(delay);
    };
 
    // grab timestamp
-   syslog(LOG_DEBUG, "conn %zu: calculating sent timestamp", *connp);
    clock_gettime(CLOCK_REALTIME, &ts);
    ts.tv_nsec++;
    us  = (uint64_t)(ts.tv_sec * 1000000);
@@ -893,7 +882,6 @@ int my_loop(int s, size_t * connp)
    // send response
    if ((cnf_echoplus))
    {
-      syslog(LOG_DEBUG, "conn %zu: updating echo plus header", *connp);
       udpbuff.msg.reply_time = htonl(us & 0xFFFFFFFFLL);
    };
    sendto(s, udpbuff.bytes, (size_t)ssize, 0, &sa.sa, sinlen);
