@@ -134,6 +134,7 @@ struct udp_echo_plus
    uint32_t  recv_time;
    uint32_t  reply_time;
    uint32_t  failures;
+   uint32_t  iteration;
 };
 
 
