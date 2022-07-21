@@ -448,6 +448,11 @@ int main(int argc, char * argv[])
 
 
    // set packet information
+   sndbuff.echoplus->req_sn     = 0;
+   sndbuff.echoplus->res_sn     = 0;
+   sndbuff.echoplus->recv_time  = 0;
+   sndbuff.echoplus->reply_time = 0;
+   sndbuff.echoplus->failures   = 0;
    sndbuff.echoplus->iteration  = htonl(1);
 
 
@@ -472,7 +477,7 @@ int main(int argc, char * argv[])
       if ((count < (epoch/(10000*cnf_interval))) && ((count < cnf_count) || (!(cnf_count))) )
       {
          count++;
-         sndbuff.echoplus->req_sn = count;
+         sndbuff.echoplus->req_sn            = htonl(count);
          send(s, sndbuff.data, cnf_packetsize, 0);
       };
 
@@ -481,6 +486,12 @@ int main(int argc, char * argv[])
       {
          if ((size = recv(s, rcvbuff.data, cnf_packetsize, 0)) == (ssize_t)cnf_packetsize)
          {
+            rcvbuff.echoplus->req_sn      = ntohl(rcvbuff.echoplus->req_sn);
+            rcvbuff.echoplus->res_sn      = ntohl(rcvbuff.echoplus->res_sn);
+            rcvbuff.echoplus->recv_time   = ntohl(rcvbuff.echoplus->recv_time);
+            rcvbuff.echoplus->reply_time  = ntohl(rcvbuff.echoplus->reply_time);
+            rcvbuff.echoplus->failures    = ntohl(rcvbuff.echoplus->failures);
+            rcvbuff.echoplus->iteration   = ntohl(1);
             rcvd++;
             delay      = rcvbuff.echoplus->reply_time - rcvbuff.echoplus->recv_time;
             delay     /= 100000000;
