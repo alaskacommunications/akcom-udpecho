@@ -813,7 +813,8 @@ int my_loop(int s, size_t * connp)
    ssize_t                    ssize;
    useconds_t                 delay;
    struct timespec            ts;
-   uint64_t                   us;
+   uint64_t                   us_recv;
+   uint64_t                   us_reply;
    struct pollfd              fds[2];
    union my_sa                sa;
    union
@@ -841,8 +842,8 @@ int my_loop(int s, size_t * connp)
 
    // grab timestamp
    clock_gettime(CLOCK_REALTIME, &ts);
-   us  = (uint64_t)(ts.tv_sec * 1000000);
-   us += (uint64_t)ts.tv_nsec / 1000;
+   us_recv  = (uint64_t)(ts.tv_sec * 1000000);
+   us_recv += (uint64_t)ts.tv_nsec / 1000;
 
    // log connection
    my_log_conn(MY_RECV, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
@@ -851,7 +852,7 @@ int my_loop(int s, size_t * connp)
    if ((cnf_echoplus))
    {
       udpbuff.msg.res_sn    = udpbuff.msg.req_sn;
-      udpbuff.msg.recv_time = htonl(us & 0xFFFFFFFFLL);
+      udpbuff.msg.recv_time = htonl(us_recv & 0xFFFFFFFFLL);
       udpbuff.msg.failures  = 0;
    };
 
@@ -876,13 +877,13 @@ int my_loop(int s, size_t * connp)
    // grab timestamp
    clock_gettime(CLOCK_REALTIME, &ts);
    ts.tv_nsec++;
-   us  = (uint64_t)(ts.tv_sec * 1000000);
-   us += (uint64_t)ts.tv_nsec / 1000;
+   us_reply  = (uint64_t)(ts.tv_sec * 1000000);
+   us_reply += (uint64_t)ts.tv_nsec / 1000;
 
    // send response
    if ((cnf_echoplus))
    {
-      udpbuff.msg.reply_time = htonl(us & 0xFFFFFFFFLL);
+      udpbuff.msg.reply_time = htonl(us_reply & 0xFFFFFFFFLL);
    };
    sendto(s, udpbuff.bytes, (size_t)ssize, 0, &sa.sa, sinlen);
 
