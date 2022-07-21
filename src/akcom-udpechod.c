@@ -109,6 +109,7 @@
 #define MY_SENT 0
 #define MY_RECV 1
 #define MY_DROP 2
+#define MY_INVAL 3
 
 
 /////////////////
@@ -731,6 +732,7 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
       case MY_SENT: mode_name = "sent"; break;
       case MY_RECV: mode_name = "recv"; break;
       case MY_DROP: mode_name = "drop"; break;
+      case MY_INVAL: mode_name = "invalid"; break;
       default: return(-1);
    };
 
