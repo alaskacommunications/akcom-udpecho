@@ -162,6 +162,15 @@ static const char  * cnf_listen      = NULL;                             // IP a
 static uid_t         cnf_uid         = 0;                                // setuid
 static gid_t         cnf_gid         = 0;                                // setgid
 
+static struct udp_echo_plus state =
+{
+   .req_sn         = 0,
+   .res_sn         = 0,
+   .recv_time      = 0,
+   .reply_time     = 0,
+   .failures       = 0
+};
+
 
 //////////////////
 //              //
@@ -833,6 +842,7 @@ int my_loop(int s, size_t * connp)
       return(0);
 
    // increment connection counter
+   state.req_sn++;
    (*connp)++;
 
    // read data
@@ -847,13 +857,9 @@ int my_loop(int s, size_t * connp)
 
    // log connection
    my_log_conn(MY_RECV, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
-
-   // process echo+ packet
    if ((cnf_echoplus))
    {
-      udpbuff.msg.res_sn    = udpbuff.msg.req_sn;
       udpbuff.msg.recv_time = htonl(us_recv & 0xFFFFFFFFLL);
-      udpbuff.msg.failures  = 0;
    };
 
    // randomly drop packets
@@ -861,10 +867,12 @@ int my_loop(int s, size_t * connp)
    {
       if ( (rand() % 100) < cnf_drop_perct)
       {
+         state.failures++;
          my_log_conn(MY_DROP, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
          return(0);
       };
    };
+   state.res_sn++;
 
    // insert random delay
    delay = 0;
@@ -883,7 +891,9 @@ int my_loop(int s, size_t * connp)
    // send response
    if ((cnf_echoplus))
    {
+      udpbuff.msg.res_sn    = htonl(state.res_sn);
       udpbuff.msg.reply_time = htonl(us_reply & 0xFFFFFFFFLL);
+      udpbuff.msg.failures  = htonl(state.failures);
    };
    sendto(s, udpbuff.bytes, (size_t)ssize, 0, &sa.sa, sinlen);
 
