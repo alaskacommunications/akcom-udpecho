@@ -857,9 +857,10 @@ int my_loop(int s, size_t * connp)
 
    // log connection
    my_log_conn(MY_RECV, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
-   if ((cnf_echoplus))
+   if ( ((cnf_echoplus)) && (ssize < (ssize_t)sizeof(struct udp_echo_plus)) )
    {
-      udpbuff.msg.recv_time = htonl(us_recv & 0xFFFFFFFFLL);
+      my_log_conn(MY_INVAL, connp, &sa, &udpbuff.msg, ssize, &ts, 0);
+      return(0);
    };
 
    // randomly drop packets
@@ -892,6 +893,7 @@ int my_loop(int s, size_t * connp)
    if ((cnf_echoplus))
    {
       udpbuff.msg.res_sn    = htonl(state.res_sn);
+      udpbuff.msg.recv_time = htonl(us_recv & 0xFFFFFFFFLL);
       udpbuff.msg.reply_time = htonl(us_reply & 0xFFFFFFFFLL);
       udpbuff.msg.failures  = htonl(state.failures);
    };
