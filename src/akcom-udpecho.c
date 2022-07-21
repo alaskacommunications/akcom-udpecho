@@ -127,6 +127,7 @@ struct udp_echo_plus
    uint32_t  recv_time;
    uint32_t  reply_time;
    uint32_t  failures;
+   uint32_t  iteration;
 };
 
 
@@ -444,6 +445,10 @@ int main(int argc, char * argv[])
    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
    start.tv_sec -= cnf_interval;
    epoch         = 0;
+
+
+   // set packet information
+   sndbuff.echoplus->iteration  = htonl(1);
 
 
    // master loop
