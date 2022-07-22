@@ -161,7 +161,7 @@ typedef struct udp_echo_plus
 static const char        * prog_name        = PROGRAM_NAME;
 static uint32_t            cnf_count        = 0;
 static int                 cnf_debug        = 0;
-static int                 cnf_echoplus     = 0;
+static int                 cnf_echoplus     = -1;
 static int                 cnf_verbose      = 0;
 static int                 cnf_silent       = 0;
 static unsigned long       cnf_timeout      = 5;
@@ -297,7 +297,7 @@ main(
          cnf_echoplus = 1;
          break;
 
-         case 'E':
+         case 'r':
          cnf_echoplus = 0;
          break;
 
@@ -551,6 +551,8 @@ my_loop(
       stats_max_adj  = ( (!(stats_max_adj)) || (pckt_time_adj > stats_max_adj) ) ? pckt_time_adj : stats_max_adj;
 
       // print packet
+      if (cnf_echoplus == -1)
+         cnf_echoplus = (((rcvbuff->res_sn)) || ((rcvbuff->recv_time)) || ((rcvbuff->reply_time))) ? 1 : 0;
       if (!(cnf_echoplus))
       {
          printf("udpecho_seq=%u time=%" PRIu64 ".%" PRIu64 " ms\n",
@@ -723,10 +725,10 @@ my_usage(
    printf("  -6                        connect via IPv6 only\n");
    printf("  -c count                  stop after sending count packets\n");
    printf("  -d, --debug               print packet debugging information\n");
-   printf("  -e, --echoplus            expect echo plus response%s\n", ((cnf_echoplus)) ? " (default)" : "");
+   printf("  -e, --echoplus            expect echo plus response%s\n", (cnf_echoplus == 1) ? " (default)" : "");
    printf("  -h, --help                print this help and exit\n");
    printf("  -i interval               interval between packet (default: %lu sec)\n", cnf_interval);
-   printf("  -r, --rfc                 expect RFC compliant echo response%s\n", (!(cnf_echoplus)) ? " (default)" : "");
+   printf("  -r, --rfc                 expect RFC compliant echo response%s\n", (cnf_echoplus == 0) ? " (default)" : "");
    printf("  -q, --quiet, --silent     do not print messages\n");
    printf("  -s packetsize             size of data bytes to be sent. (default: %zu bytes)\n", cnf_packetsize);
    printf("  -t sec                    response timeout (default: %lu sec)\n", cnf_timeout);
