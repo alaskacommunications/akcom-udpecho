@@ -62,10 +62,10 @@ if test -d ${SRCDIR}/.git || test -f ${SRCDIR}/.git;then
 fi
 
 
-# generates files for bindletools
-if test -x ${SRCDIR}/contrib/bindletools/autogen.sh;then
-   ${SRCDIR}/contrib/bindletools/autogen.sh || exit 1
-fi
+## generates files for bindletools
+#if test -x ${SRCDIR}/contrib/bindletools/autogen.sh;then
+#   ${SRCDIR}/contrib/bindletools/autogen.sh || exit 1
+#fi
 
 
 # symlinks Bindle Tools M4 macros

@@ -50,20 +50,13 @@ AM_CFLAGS				= -O2 $(CFLAGS_WARNINGS)
 AM_CXXFLAGS				= -O2 @AM_CXXFLAGS@
 AM_OBJCFLAGS				= -O2 @AM_OBJCFLAGS@
 AM_CPPFLAGS				= -O2 \
-					  -UPMARK \
 					  -DHAVE_CONFIG_H=1 \
 					  -I$(top_builddir)/include \
 					  -I$(top_srcdir)/include \
 					  -DSYSCONFDIR=\"$(sysconfdir)\"
 ACLOCAL_AMFLAGS				= -I m4 -W all -W error
 AM_MAKEINFOFLAGS                        = --no-split
-AM_DISTCHECK_CONFIGURE_FLAGS		= --enable-strictwarnings \
-					  CFLAGS="$(CFLAGS)" \
-					  CPPFLAGS="$(CPPFLAGS)" \
-					  LDFLAGS="$(LDFLAGS)"
-AM_YFLAGS				= -d
 DEFS					=
-LDADD					=
 
 
 # automake targets
@@ -98,8 +91,7 @@ EXTRA_DIST				= $(noinst_HEADERS) \
 					  NEWS.md \
 					  README.md \
 					  TODO.md
-CLEANFILES				= \
-					  $(builddir)/a.out   $(srcdir)/a.out \
+CLEANFILES				= $(builddir)/a.out   $(srcdir)/a.out \
 					  $(builddir)/*/a.out $(srcdir)/*/a.out \
 					  config.h.in~ $(srcdir)/config.h.in~ \
 					  $(man_MANS) \
@@ -109,34 +101,29 @@ CLEANFILES				= \
 					  @PACKAGE_TARNAME@-*.tar.* \
 					  @PACKAGE_TARNAME@-*.txz \
 					  @PACKAGE_TARNAME@-*.zip
-DISTCHECK_CONFIGURE_FLAGS		= --enable-strictwarnings
+DISTCHECK_CONFIGURE_FLAGS		= --enable-strictwarnings \
+					  LDFLAGS="$(LDFLAGS)" \
+					  CFLAGS="$(CFLAGS)" \
+					  CPPFLAGS="$(CPPFLAGS)"
 
 
 # macros for src/akcom-udpecho
 src_akcom_udpecho_DEPENDENCIES		= Makefile
 src_akcom_udpecho_CPPFLAGS		= -DPROGRAM_NAME="\"akcom-udpecho\"" $(AM_CPPFLAGS)
-src_akcom_udpecho_CFLAGS		= $(AM_CFLAGS)
-src_akcom_udpecho_LDFLAGS		= $(AM_LDFLAGS)
-src_akcom_udpecho_LDADD			= $(AM_LDADD) 
 src_akcom_udpecho_SOURCES		= src/akcom-udpecho.c
 
 
 # macros for src/akcom-udpechod
 src_akcom_udpechod_DEPENDENCIES		= Makefile
 src_akcom_udpechod_CPPFLAGS		= -DPROGRAM_NAME="\"akcom-udpechod\"" $(AM_CPPFLAGS)
-src_akcom_udpechod_CFLAGS		= $(AM_CFLAGS)
-src_akcom_udpechod_LDFLAGS		= $(AM_LDFLAGS)
-src_akcom_udpechod_LDADD		= $(AM_LDADD) 
 src_akcom_udpechod_SOURCES		= src/akcom-udpechod.c
 
 
 # Makefile includes
 GIT_PACKAGE_VERSION_DIR=include
 SUBST_EXPRESSIONS =
-include $(srcdir)/contrib/bindletools/build-aux/makefile-bindle.am
-include $(srcdir)/contrib/bindletools/build-aux/makefile-autotools.am
-include $(srcdir)/contrib/bindletools/build-aux/makefile-subst.am
-include $(srcdir)/contrib/bindletools/build-aux/makefile-version.am
+include contrib/bindletools/build-aux/makefile-subst.am
+include contrib/bindletools/build-aux/makefile-version.am
 
 
 # custom targets
