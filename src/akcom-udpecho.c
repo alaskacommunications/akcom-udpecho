@@ -128,6 +128,7 @@ struct udp_echo_plus
    uint32_t  reply_time;
    uint32_t  failures;
    uint32_t  iteration;
+   uint8_t   bytes[];
 };
 
 
@@ -345,37 +346,45 @@ main(
       return(1);
    };
 
-
-   // allocate buffer
-   if ((fd = open("/dev/urandom", O_RDONLY)) == -1)
-   {
-      fprintf(stderr, "%s: open(/dev/urandom): %s\n", prog_name, strerror(errno));
-      return(1);
-   };
+   // adjust defaults
    if (cnf_packetsize < sizeof(struct udp_echo_plus))
       cnf_packetsize = sizeof(struct udp_echo_plus);
-   if ((sndbuff.data = malloc(cnf_packetsize)) == NULL)
-   {
-      fprintf(stderr, "%s: out of virtual memory\n", prog_name);
-      close(fd);
-      return(1);
-   };
+
+   // allocate receive buffer
    if ((rcvbuff.data = malloc(cnf_packetsize)) == NULL)
    {
       fprintf(stderr, "%s: out of virtual memory\n", prog_name);
-      close(fd);
       return(1);
    };
-   if ((size = read(fd, sndbuff.data, cnf_packetsize)) == -1)
+
+   // allocate send buffer
+   if ((sndbuff.data = malloc(cnf_packetsize)) == NULL)
    {
-      fprintf(stderr, "%s: read(): %s\n", prog_name, strerror(errno));
-      close(fd);
-      free(sndbuff.data);
+      fprintf(stderr, "%s: out of virtual memory\n", prog_name);
       free(rcvbuff.data);
       return(1);
    };
-   close(fd);
-   bzero(sndbuff.data, sizeof(struct udp_echo_plus));
+   memset(sndbuff.data, 0, sizeof(struct udp_echo_plus));
+   sndbuff.echoplus->iteration  = htonl(1);
+   if (cnf_packetsize > sizeof(struct udp_echo_plus))
+   {
+      if ((fd = open("/dev/urandom", O_RDONLY)) == -1)
+      {
+         fprintf(stderr, "%s: open(/dev/urandom): %s\n", prog_name, strerror(errno));
+         free(rcvbuff.data);
+         free(sndbuff.data);
+         return(1);
+      };
+      if (read(fd, sndbuff.echoplus->bytes, cnf_packetsize-sizeof(struct udp_echo_plus)) == -1)
+      {
+         fprintf(stderr, "%s: read(): %s\n", prog_name, strerror(errno));
+         close(fd);
+         free(sndbuff.data);
+         free(rcvbuff.data);
+         return(1);
+      };
+      close(fd);
+   };
 
 
    // resolve host
@@ -419,16 +428,6 @@ main(
    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
    start.tv_sec -= cnf_interval;
    epoch         = 0;
-
-
-   // set packet information
-   sndbuff.echoplus->req_sn     = 0;
-   sndbuff.echoplus->res_sn     = 0;
-   sndbuff.echoplus->recv_time  = 0;
-   sndbuff.echoplus->reply_time = 0;
-   sndbuff.echoplus->failures   = 0;
-   sndbuff.echoplus->iteration  = htonl(1);
-
 
    // master loop
    while (!(should_stop))
