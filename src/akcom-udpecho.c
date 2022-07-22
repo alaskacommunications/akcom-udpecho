@@ -746,10 +746,10 @@ my_usage(
    printf("  -6                        connect via IPv6 only\n");
    printf("  -c count                  stop after sending count packets\n");
    printf("  -d, --debug               print packet debugging information\n");
-   printf("  -e, --echoplus            expect echo plus response%s\n", (cnf_echoplus == 1) ? " (default)" : "");
+   printf("  -e, --echoplus            expect echo plus response (default: auto detect)\n");
    printf("  -h, --help                print this help and exit\n");
    printf("  -i interval               interval between packet (default: %lu sec)\n", cnf_interval);
-   printf("  -r, --rfc                 expect RFC compliant echo response%s\n", (cnf_echoplus == 0) ? " (default)" : "");
+   printf("  -r, --rfc                 expect RFC compliant response (default: auto detect)\n");
    printf("  -q, --quiet, --silent     do not print messages\n");
    printf("  -s packetsize             size of data bytes to be sent. (default: %zu bytes)\n", cnf_packetsize);
    printf("  -t sec                    response timeout (default: %lu sec)\n", cnf_timeout);
