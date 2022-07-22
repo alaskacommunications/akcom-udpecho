@@ -58,6 +58,7 @@ Software Requirements
 =====================
 
    * GNU GCC 4.2.1/Clang 13.0.0
+   * GNU Make 3.81
    * GNU Libtool 2.4
    * GNU Autoconf 2.69
    * GNU Automake 1.16.5
