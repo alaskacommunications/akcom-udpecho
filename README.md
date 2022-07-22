@@ -97,7 +97,7 @@ _akcom-udpecho_ usage:
 Example usage (RFC 862 compliant):
 
       $ akcom-udpecho -c 5 --rfc udpecho.example.com 30006
-      UDPECHO udpecho.example.com:30006 (209.112.131.108:30006): 20 bytes
+      UDPECHO udpecho.example.com:30006 (209.112.131.108:30006): 40 bytes
       udpecho_seq=1 time=17.3 ms
       udpecho_seq=2 time=13.7 ms
       udpecho_seq=3 time=19.0 ms
@@ -109,20 +109,21 @@ Example usage (RFC 862 compliant):
       round-trip min/avg/max = 12.6/16.1/19.0 ms
       $
 
-Example usage (TR-143 UDPEchoPlus compliant):
+Example usage (TR-143 UDPEchoPlus compliant) using server with 100000 us 
+random delay:
 
       $ akcom-udpecho -c 5 --echoplus udpecho.example.com 30006
-      UDPECHO udpecho.example.com:30006 (209.112.131.108:30006): 20 bytes
-      udpecho_seq=1 time=20.9 ms delay=1.5 ms adj_time=19.4 ms
-      udpecho_seq=2 time=17.4 ms delay=2.8 ms adj_time=14.6 ms
-      udpecho_seq=3 time=19.7 ms delay=0.3 ms adj_time=19.4 ms
-      udpecho_seq=4 time=18.7 ms delay=0.7 ms adj_time=18.0 ms
-      udpecho_seq=5 time=14.1 ms delay=2.7 ms adj_time=11.4 ms
+      UDPECHO udpecho.example.com:30006 (209.112.131.108:30006): 40 bytes
+      udpecho_seq=1 failures=0 time=158.0 ms delay=77.9 ms adj_time=80.1 ms
+      udpecho_seq=2 failures=0 time=109.1 ms delay=29.2 ms adj_time=79.9 ms
+      udpecho_seq=3 failures=0 time=136.1 ms delay=56.2 ms adj_time=79.9 ms
+      udpecho_seq=4 failures=0 time=83.1 ms delay=3.0 ms adj_time=80.0 ms
+      udpecho_seq=5 failures=0 time=133.2 ms delay=53.1 ms adj_time=80.0 ms
       
       --- udpecho.example.com udpecho statistics ---
       5 packets transmitted, 5 packets received, 0.0% packet loss
-      round-trip min/avg/max = 14.1/18.1/20.9 ms
-      adjusted round-trip min/avg/max = 11.4/16.5/19.4 ms
+      round-trip min/avg/max = 83.1/123.9/158.0 ms
+      adjusted round-trip min/avg/max = 79.9/80.0/80.1 ms
       $
 
 akcom-udpechod
