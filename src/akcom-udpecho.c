@@ -666,6 +666,9 @@ my_socket(
       return(-1);
    };
 
+   // configure socket
+   fcntl(s, F_SETFL, O_NONBLOCK);
+
    return(s);
 }
 
