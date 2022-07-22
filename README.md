@@ -56,10 +56,10 @@ server support RFC 862 (default) and support TR-143 UDPEchoPlus if passed the
 Software Requirements
 =====================
 
-   * GNU GCC 4.2.1
+   * GNU GCC 4.2.1/Clang 13.0.0
    * GNU Libtool 2.4
-   * GNU Autoconf 2.65
-   * GNU Automake 1.11.1
+   * GNU Autoconf 2.69
+   * GNU Automake 1.16.5
    * Git 1.7.2.3
 
 
