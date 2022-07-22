@@ -168,6 +168,13 @@ main(
          char *                        argv[] );
 
 
+static int
+my_loop(
+         int                           s,
+         echoplus_t *                  rcvbuff,
+         echoplus_t *                  sndbuff );
+
+
 int
 my_socket(
          const char *                  host,
@@ -211,25 +218,8 @@ main(
    int                       c;
    int                       s;
    int                       fd;
-   int                       rc;
    int                       opt_index;
-   uint32_t                  count;
-   uint32_t                  rcvd;
-   uint64_t                  epoch;
-   uint64_t                  epoch_adj;
-   uint64_t                  epoch_max;
-   uint64_t                  delay;
-   uint64_t                  max;
-   uint64_t                  max_adj;
-   uint64_t                  min;
-   uint64_t                  min_adj;
-   uint64_t                  avg;
-   uint64_t                  avg_adj;
-   ssize_t                   size;
    char                    * ptr;
-   struct timespec           start;
-   struct timespec           now;
-   struct pollfd             fds[2];
    echoplus_t *              sndbuff;
    echoplus_t *              rcvbuff;
 
@@ -396,6 +386,50 @@ main(
       free(rcvbuff);
       return(1);
    };
+
+   if ((my_loop(s, rcvbuff, sndbuff)))
+   {
+      free(sndbuff);
+      free(rcvbuff);
+      close(s);
+      return(1);
+   };
+
+   // free resources
+   free(sndbuff);
+   free(rcvbuff);
+   close(s);
+
+
+   return(0);
+}
+
+
+int
+my_loop(
+         int                           s,
+         echoplus_t *                  rcvbuff,
+         echoplus_t *                  sndbuff )
+{
+   int                     rc;
+   uint64_t                epoch;
+   uint64_t                epoch_adj;
+   uint64_t                epoch_max;
+   uint64_t                delay;
+   uint32_t                stats_sent;
+   uint32_t                stats_rcvd;
+   uint64_t                stats_max;
+   uint64_t                stats_max_adj;
+   uint64_t                stats_min;
+   uint64_t                stats_min_adj;
+   uint64_t                stats_avg;
+   uint64_t                stats_avg_adj;
+   ssize_t                 size;
+   struct pollfd           fds[2];
+   struct timespec         start;
+   struct timespec         now;
+
+   // initialize poller data
    fds[0].fd      = s;
    fds[0].events  = POLLIN;
    fds[0].revents = 0;
@@ -404,15 +438,14 @@ main(
    fds[1].revents = 0;
 
    // initialize statistics
-   count   = 0;
-   rcvd    = 0;
-   min     = 0;
-   min_adj = 0;
-   max     = 0;
-   max_adj = 0;
-   avg     = 0;
-   avg_adj = 0;
-
+   stats_sent     = 0;
+   stats_rcvd     = 0;
+   stats_min      = 0;
+   stats_min_adj  = 0;
+   stats_max      = 0;
+   stats_max_adj  = 0;
+   stats_avg      = 0;
+   stats_avg_adj  = 0;
 
    // start clock
    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -428,19 +461,19 @@ main(
       epoch -= ((uint64_t)start.tv_sec * 10000) + ((uint64_t)start.tv_nsec / 100000);
 
       // trigger stop
-      if ( ((cnf_count)) && (count >= cnf_count) )
+      if ( ((cnf_count)) && (stats_sent >= cnf_count) )
       {
          epoch_max  = cnf_count * (uint64_t)cnf_interval * 10000;
          epoch_max += (uint64_t)cnf_timeout * 10000;
-         if (( epoch >= epoch_max) || (rcvd >= count))
+         if (( epoch >= epoch_max) || (stats_rcvd >= stats_sent))
             should_stop = 1;
       };
 
       // send UDP echo request
-      if ((count < (epoch/(10000*cnf_interval))) && ((count < cnf_count) || (!(cnf_count))) )
+      if ((stats_sent < (epoch/(10000*cnf_interval))) && ((stats_sent < cnf_count) || (!(cnf_count))) )
       {
-         count++;
-         sndbuff->req_sn            = htonl(count);
+         stats_sent++;
+         sndbuff->req_sn            = htonl((uint32_t)stats_sent);
          send(s, sndbuff, cnf_packetsize, 0);
       };
 
@@ -462,21 +495,21 @@ main(
                printf("           Failures:        %08" PRIx32 "\n",               rcvbuff->failures);
                printf("           Iteration:       %08" PRIx32 "\n",               rcvbuff->iteration);
             };
-            rcvd++;
+            stats_rcvd++;
             delay      = rcvbuff->reply_time - rcvbuff->recv_time;
             delay     /= 100000000;
             epoch     -= (rcvbuff->req_sn * 10000);
             epoch_adj  = epoch - delay;
-            avg       += epoch;
-            avg_adj   += epoch_adj;
-            if ( (!(min)) || (epoch < min) )
-               min = epoch;
-            if ( (!(max)) || (epoch > max) )
-               max = epoch;
-            if ( (!(min_adj)) || (epoch_adj < min_adj) )
-               min_adj = epoch_adj;
-            if ( (!(max_adj)) || (epoch_adj > max_adj) )
-               max_adj = epoch_adj;
+            stats_avg       += epoch;
+            stats_avg_adj   += epoch_adj;
+            if ( (!(stats_min)) || (epoch < stats_min) )
+               stats_min = epoch;
+            if ( (!(stats_max)) || (epoch > stats_max) )
+               stats_max = epoch;
+            if ( (!(stats_min_adj)) || (epoch_adj < stats_min_adj) )
+               stats_min_adj = epoch_adj;
+            if ( (!(stats_max_adj)) || (epoch_adj > stats_max_adj) )
+               stats_max_adj = epoch_adj;
             if ((cnf_echoplus))
             {
                printf("udpecho_seq=%u failures=%" PRIu32 " time=%" PRIu64 ".%" PRIu64 " ms delay=%" PRIu64 ".%" PRIu64 " ms adj_time=%" PRIu64 ".%" PRIu64 " ms\n",
@@ -500,38 +533,30 @@ main(
       };
    };
 
-
    if (!(cnf_silent))
    {
       printf("\n");
       printf("--- %s udpecho statistics ---\n", cnf_host);
       printf("%i packets transmitted, %i packets received, %i.%i%% packet loss\n",
-             count,
-             rcvd,
-             ((count - rcvd) * 100) / count,
-             (((count - rcvd) * 1000) / count) % 10
+             stats_sent,
+             stats_rcvd,
+             ((stats_sent - stats_rcvd) * 100) / stats_sent,
+             (((stats_sent - stats_rcvd) * 1000) / stats_sent) % 10
             );
       printf("round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
-             min/10,        min%10,
-             (avg/rcvd)/10, (avg/rcvd)%10,
-             max/10,        max%10
+             stats_min/10,        stats_min%10,
+             (stats_avg/stats_rcvd)/10, (stats_avg/stats_rcvd)%10,
+             stats_max/10,        stats_max%10
             );
       if ((cnf_echoplus))
       {
          printf("adjusted round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
-                min_adj/10,        min_adj%10,
-                (avg_adj/rcvd)/10, (avg_adj/rcvd)%10,
-                max_adj/10,        max_adj%10
+                stats_min_adj/10,        stats_min_adj%10,
+                (stats_avg_adj/stats_rcvd)/10, (stats_avg_adj/stats_rcvd)%10,
+                stats_max_adj/10,        stats_max_adj%10
                );
       };
    };
-
-
-   // free resources
-   free(sndbuff);
-   free(rcvbuff);
-   close(s);
-
 
    return(0);
 }
