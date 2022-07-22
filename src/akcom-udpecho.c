@@ -436,7 +436,6 @@ my_loop(
          echoplus_t *                  rcvbuff,
          echoplus_t *                  sndbuff )
 {
-   int                     rc;
    uint64_t                pckt_time;
    uint64_t                pckt_time_adj;
    uint64_t                epoch_usec;
@@ -449,7 +448,6 @@ my_loop(
    uint64_t                stats_min_adj;
    uint64_t                stats_avg;
    uint64_t                stats_avg_adj;
-   ssize_t                 size;
    struct pollfd           fds[2];
    struct timespec         ts_sent;
    struct timespec         start;
@@ -515,14 +513,14 @@ my_loop(
       };
 
       // receive UDP echo response
-      if ((rc = poll(fds, 1, 0)) <= 0)
+      if (poll(fds, 1, 0) <= 0)
       {
          usleep(50);
          continue;
       };
 
       // reads packet
-      if ((size = recv(s, rcvbuff, cnf_packetsize, 0)) != (ssize_t)cnf_packetsize)
+      if (recv(s, rcvbuff, cnf_packetsize, 0) != (ssize_t)cnf_packetsize)
          continue;
       rcvbuff->req_sn      = ntohl(rcvbuff->req_sn);
       rcvbuff->res_sn      = ntohl(rcvbuff->res_sn);
@@ -660,7 +658,7 @@ my_socket(
       fprintf(stderr, "%s: socket(): %s\n", prog_name, strerror(errno));
       return(-1);
    };
-   if ((rc = connect(s, &sa.sa, socklen)) == -1)
+   if (connect(s, &sa.sa, socklen) == -1)
    {
       fprintf(stderr, "%s: connect(): %s\n", prog_name, strerror(errno));
       return(-1);
