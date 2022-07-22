@@ -154,6 +154,7 @@ static int                 cnf_silent       = 0;
 static unsigned long       cnf_timeout      = 5;
 static const char        * cnf_port         = "30006";
 static const char        * cnf_host         = NULL;
+static int                 cnf_ai_family    = PF_UNSPEC;
 static unsigned long       cnf_interval     = 1;
 static size_t              cnf_packetsize   = sizeof(struct udp_echo_plus);
 static int                 should_stop      = 0;
@@ -171,6 +172,13 @@ extern int
 main(
          int                           argc,
          char *                        argv[] );
+
+
+int
+my_socket(
+         const char *                  host,
+         const char *                  port,
+         int                           family );
 
 
 // signal system stop
@@ -224,15 +232,7 @@ main(
    uint64_t                  avg;
    uint64_t                  avg_adj;
    ssize_t                   size;
-   unsigned short            port;
    char                    * ptr;
-   char                      addrstr[INET6_ADDRSTRLEN];
-   char                      logmsg[256];
-   union my_sa               sa;
-   socklen_t                 socklen;
-   struct addrinfo         * res;
-   struct addrinfo         * info;
-   struct addrinfo           hints;
    struct timespec           start;
    struct timespec           now;
    struct pollfd             fds[2];
@@ -259,13 +259,6 @@ main(
    if ((ptr = rindex(argv[0], '/')) != NULL)
       prog_name = &ptr[1];
 
-   // initializes variables
-   bzero(&hints,        sizeof(struct addrinfo));
-   hints.ai_flags     = AI_ADDRCONFIG | AI_V4MAPPED | AI_ALL;
-   hints.ai_family    = PF_UNSPEC;
-   hints.ai_socktype  = SOCK_DGRAM;
-   hints.ai_protocol  = IPPROTO_UDP;
-
    // process arguments
    while((c = getopt_long(argc, argv, short_opt, long_opt, &opt_index)) != -1)
    {
@@ -276,11 +269,11 @@ main(
          break;
 
          case '4':
-         hints.ai_family = PF_INET;
+         cnf_ai_family = PF_INET;
          break;
 
          case '6':
-         hints.ai_family = PF_INET6;
+         cnf_ai_family = PF_INET6;
          break;
 
          case 'c':
@@ -386,50 +379,8 @@ main(
 
 
    // resolve host
-   bzero(&sa,     sizeof(sa));
-   bzero(addrstr, sizeof(addrstr));
-   socklen = 0;
-   if ((rc = getaddrinfo(cnf_host, cnf_port, &hints, &res)) != 0)
+   if ((s = my_socket(cnf_host, cnf_port, cnf_ai_family)) == -1)
    {
-      fprintf(stderr, "%s: getaddrinfo(): %s\n", prog_name, gai_strerror(rc));
-      free(sndbuff.data);
-      free(rcvbuff.data);
-      return(1);
-   };
-   for(info = res; (info != NULL); info = info->ai_next)
-   {
-      if (info->ai_addr->sa_family != AF_INET6)
-         continue;
-      socklen = info->ai_addrlen;
-      memcpy(&sa, info->ai_addr, socklen);
-      inet_ntop(AF_INET6, &sa.sin6.sin6_addr, addrstr, sizeof(addrstr));
-      port = ntohs(sa.sin6.sin6_port);
-      snprintf(logmsg, sizeof(logmsg), "UDPECHO %s:%hu ([%s]:%hu): %zu bytes\n", cnf_host, port, addrstr, port, cnf_packetsize);
-   }
-   if (sa.sa.sa_family != AF_INET6)
-   {
-      socklen = res->ai_addrlen;
-      memcpy(&sa.sa, res->ai_addr, socklen);
-      inet_ntop(AF_INET, &sa.sin.sin_addr, addrstr, sizeof(addrstr));
-      port = ntohs(sa.sin.sin_port);
-      snprintf(logmsg, sizeof(logmsg), "UDPECHO %s:%hu (%s:%hu): %zu bytes\n", cnf_host, port, addrstr, port, cnf_packetsize);
-   };
-   freeaddrinfo(res);
-   if (!(cnf_silent))
-      printf("%s", logmsg);
-
-
-   // open and connect socket
-   if ((s = socket(sa.sa.sa_family, SOCK_DGRAM, 0)) == -1)
-   {
-      fprintf(stderr, "%s: socket(): %s\n", prog_name, strerror(errno));
-      free(sndbuff.data);
-      free(rcvbuff.data);
-      return(1);
-   };
-   if ((rc = connect(s, &sa.sa, socklen)) == -1)
-   {
-      fprintf(stderr, "%s: connect(): %s\n", prog_name, strerror(errno));
       free(sndbuff.data);
       free(rcvbuff.data);
       return(1);
@@ -594,6 +545,77 @@ main(
 
 
    return(0);
+}
+
+
+int
+my_socket(
+         const char *                  host,
+         const char *                  service,
+         int                           family )
+{
+   int                        rc;
+   int                        s;
+   unsigned short             port;
+   socklen_t                  socklen;
+   struct addrinfo *          res;
+   struct addrinfo *          info;
+   struct addrinfo            hints;
+   union my_sa                sa;
+   char                       addrstr[INET6_ADDRSTRLEN];
+   char                       logmsg[256];
+
+   memset(&hints, 0, sizeof(struct addrinfo));
+   hints.ai_flags     = AI_ADDRCONFIG | AI_V4MAPPED | AI_ALL;
+   hints.ai_family    = family;
+   hints.ai_socktype  = SOCK_DGRAM;
+   hints.ai_protocol  = IPPROTO_UDP;
+
+   // resolve host
+   memset(&sa,     0, sizeof(sa));
+   memset(addrstr, 0, sizeof(addrstr));
+   socklen = 0;
+   if ((rc = getaddrinfo(host, service, &hints, &res)) != 0)
+   {
+      fprintf(stderr, "%s: getaddrinfo(): %s\n", prog_name, gai_strerror(rc));
+      return(-1);
+   };
+   for(info = res; (info != NULL); info = info->ai_next)
+   {
+      if (info->ai_addr->sa_family != AF_INET6)
+         continue;
+      socklen = info->ai_addrlen;
+      memcpy(&sa, info->ai_addr, socklen);
+      inet_ntop(AF_INET6, &sa.sin6.sin6_addr, addrstr, sizeof(addrstr));
+      port = ntohs(sa.sin6.sin6_port);
+      snprintf(logmsg, sizeof(logmsg), "UDPECHO %s:%hu ([%s]:%hu): %zu bytes\n", cnf_host, port, addrstr, port, cnf_packetsize);
+   }
+   if (sa.sa.sa_family != AF_INET6)
+   {
+      socklen = res->ai_addrlen;
+      memcpy(&sa.sa, res->ai_addr, socklen);
+      inet_ntop(AF_INET, &sa.sin.sin_addr, addrstr, sizeof(addrstr));
+      port = ntohs(sa.sin.sin_port);
+      snprintf(logmsg, sizeof(logmsg), "UDPECHO %s:%hu (%s:%hu): %zu bytes\n", cnf_host, port, addrstr, port, cnf_packetsize);
+   };
+   freeaddrinfo(res);
+   if (!(cnf_silent))
+      printf("%s", logmsg);
+
+
+   // open and connect socket
+   if ((s = socket(sa.sa.sa_family, SOCK_DGRAM, 0)) == -1)
+   {
+      fprintf(stderr, "%s: socket(): %s\n", prog_name, strerror(errno));
+      return(-1);
+   };
+   if ((rc = connect(s, &sa.sa, socklen)) == -1)
+   {
+      fprintf(stderr, "%s: connect(): %s\n", prog_name, strerror(errno));
+      return(-1);
+   };
+
+   return(s);
 }
 
 
