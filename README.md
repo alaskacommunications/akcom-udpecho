@@ -41,6 +41,7 @@ Contents
    * Utilities
      - akcom-udpecho
      - akcom-udpechod
+   * Building Package
    * Source Code
    * Package Maintence Notes
 
@@ -176,6 +177,23 @@ Example usage (TR-143 UDPEchoPlus compliant):
          --delay=10000 \
          --drop=10 \
          --echoplus
+
+
+Building Package
+================
+
+To build the package using a source tarball, run the following:
+
+      tar -xvf akcom-udpecho-x.y.z.tar.xz
+      mkdir -p akcom-udpecho-x.y.z/build
+      cd akcom-udpecho-x.y.z/build
+      ../configure
+      make
+      make install
+   
+For additional configuration options, run:
+
+      ../configure --help
 
 
 Source Code
