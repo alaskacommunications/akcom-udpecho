@@ -386,6 +386,15 @@ main(
       close(fd);
    };
 
+   // configure signals
+   signal(SIGPIPE, SIG_IGN);
+   signal(SIGUSR1, SIG_IGN);
+   signal(SIGUSR2, SIG_IGN);
+   signal(SIGHUP,  my_stop);
+   signal(SIGINT,  my_stop);
+   signal(SIGQUIT, my_stop);
+   signal(SIGALRM, my_stop);
+   signal(SIGTERM, my_stop);
 
    // resolve host
    if ((s = my_socket(cnf_host, cnf_port, cnf_ai_family)) == -1)
@@ -400,18 +409,6 @@ main(
    fds[1].fd      = -1;
    fds[1].events  = 0;
    fds[1].revents = 0;
-
-
-   // configure signals
-   signal(SIGPIPE, SIG_IGN);
-   signal(SIGUSR1, SIG_IGN);
-   signal(SIGUSR2, SIG_IGN);
-   signal(SIGHUP,  my_stop);
-   signal(SIGINT,  my_stop);
-   signal(SIGQUIT, my_stop);
-   signal(SIGALRM, my_stop);
-   signal(SIGTERM, my_stop);
-
 
    // initialize statistics
    count   = 0;
