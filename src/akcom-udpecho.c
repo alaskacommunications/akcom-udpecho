@@ -108,6 +108,10 @@
 #define PACKAGE_VERSION "0.0"
 #endif
 
+#ifndef CLOCK_MONOTONIC_RAW
+#   define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC
+#endif
+
 #define my_sec2msec( sec )   (  sec * 1000 )
 #define my_sec2usec( sec )   (  sec * 1000000 )
 #define my_sec2nsec( sec )   (  sec * 1000000000 )
