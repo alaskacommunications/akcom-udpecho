@@ -200,16 +200,16 @@ Downloading Source:
 
       $ git clone https://github.com/alaskacommunications/akcom-udpecho/
 
-Compiling source using basic method:
-
-      $ cd akcom-udpecho/src
-      $ make && make install
-
 Preparing and compiling source using GNU autotools method:
 
       $ cd akcom-udpecho/build
       $ ../autogen.sh
       $ ../configure
+      $ make && make install
+
+Compiling source using basic method:
+
+      $ cd akcom-udpecho/src
       $ make && make install
 
 For more information on building and installing using configure, please

@@ -64,10 +64,13 @@ OBJS					= akcom-udpecho.lo \
 					  akcom-udpechod.lo
 
 
-.PHONY: all install clean uninstall
+.PHONY: all all-progs install clean uninstall notice
 
 
-all: $(PROGS)
+all: notice
+
+
+all-progs: $(PROGS)
 
 
 akcom-udpecho.lo: akcom-udpecho.c
@@ -82,9 +85,37 @@ $(PROGS): $(OBJS)
 	$(LIBTOOL) --mode=link --tag=CC gcc $(CFLAGS) -o $(@) $(@).lo
 
 
-install: $(PROGS)
+install: notice
+
+
+install-progs: $(PROGS)
 	$(INSTALL) $(INSTALL_OPTS) akcom-udpecho  $(DESTDIR)$(PREFIX)/bin/akcom-udpecho
 	$(INSTALL) $(INSTALL_OPTS) akcom-udpechod $(DESTDIR)$(PREFIX)/sbin/akcom-udpechod
+
+
+notice:
+	@echo ""
+	@echo ""
+	@echo "   ##########################################################"
+	@echo "   #                                                        #"
+	@echo "   #  The preferred method of compiling is to the GNU       #"
+	@echo "   #  autotools:                                            #"
+	@echo "   #                                                        #"
+	@echo "   #     $$ mkdir build && cd build                          #"
+	@echo "   #     $$ ../autogen.sh # (if obtaining source with GitI)  #"
+	@echo "   #     $$ ../configure                                     #"
+	@echo "   #     $$ make                                             #"
+	@echo "   #     $$ make install                                     #"
+	@echo "   #                                                        #"
+	@echo "   #  To use make without autotools, run the following from #"
+	@echo "   #  the source ('src/') directory:                        #"
+	@echo "   #                                                        #"
+	@echo "   #     $$ make all-progs                                   #"
+	@echo "   #     $$ make install-progs                               #"
+	@echo "   #                                                        #"
+	@echo "   ##########################################################"
+	@echo ""
+	@echo ""
 
 
 uninstall:
@@ -92,7 +123,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/sbin/akcom-udpechod
 
 
-clean:
+clean: notice
 	$(LIBTOOL) --mode=clean rm -f $(OBJS)
 	$(LIBTOOL) --mode=clean rm -f $(PROGS)
 
