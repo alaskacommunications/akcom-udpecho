@@ -572,24 +572,30 @@ my_loop(
    {
       printf("\n");
       printf("--- %s udpecho statistics ---\n", cnf_host);
-      printf("%i packets transmitted, %i packets received, %i.%i%% packet loss\n",
-             stats_sent,
-             stats_rcvd,
-             ((stats_sent - stats_rcvd) * 100) / stats_sent,
-             (((stats_sent - stats_rcvd) * 1000) / stats_sent) % 10
-      );
-      printf("round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
-             my_usec2msec(stats_min),            my_usec2msec_tenths(stats_min),
-             my_usec2msec(stats_avg/stats_rcvd), my_usec2msec_tenths(stats_avg/stats_rcvd),
-             my_usec2msec(stats_max),            my_usec2msec_tenths(stats_max)
-      );
-      if ((cnf_echoplus))
+      if ((stats_sent))
       {
-         printf("adjusted round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
-                my_usec2msec(stats_min_adj),            my_usec2msec_tenths(stats_min_adj),
-                my_usec2msec(stats_avg_adj/stats_rcvd), my_usec2msec_tenths(stats_avg_adj/stats_rcvd),
-                my_usec2msec(stats_max_adj),            my_usec2msec_tenths(stats_max_adj)
+         printf("%i packets transmitted, %i packets received, %i.%i%% packet loss\n",
+                stats_sent,
+                stats_rcvd,
+                ((stats_sent - stats_rcvd) * 100) / stats_sent,
+                (((stats_sent - stats_rcvd) * 1000) / stats_sent) % 10
          );
+      };
+      if ((stats_rcvd))
+      {
+         printf("round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
+                my_usec2msec(stats_min),            my_usec2msec_tenths(stats_min),
+                my_usec2msec(stats_avg/stats_rcvd), my_usec2msec_tenths(stats_avg/stats_rcvd),
+                my_usec2msec(stats_max),            my_usec2msec_tenths(stats_max)
+         );
+         if ((cnf_echoplus))
+         {
+            printf("adjusted round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
+                   my_usec2msec(stats_min_adj),            my_usec2msec_tenths(stats_min_adj),
+                   my_usec2msec(stats_avg_adj/stats_rcvd), my_usec2msec_tenths(stats_avg_adj/stats_rcvd),
+                   my_usec2msec(stats_max_adj),            my_usec2msec_tenths(stats_max_adj)
+            );
+         };
       };
    };
 
