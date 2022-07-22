@@ -629,7 +629,8 @@ my_socket(
       fprintf(stderr, "%s: getaddrinfo(): %s\n", prog_name, gai_strerror(rc));
       return(-1);
    };
-   for(info = res; (info != NULL); info = info->ai_next)
+   // use first IPv6 address
+   for(info = res; ((info != NULL) && (!(socklen)) ); info = info->ai_next)
    {
       if (info->ai_addr->sa_family != AF_INET6)
          continue;
@@ -638,9 +639,12 @@ my_socket(
       inet_ntop(AF_INET6, &sa.sin6.sin6_addr, addrstr, sizeof(addrstr));
       port = ntohs(sa.sin6.sin6_port);
       snprintf(logmsg, sizeof(logmsg), "UDPECHO %s:%hu ([%s]:%hu): %zu bytes\n", cnf_host, port, addrstr, port, cnf_packetsize);
-   }
-   if (sa.sa.sa_family != AF_INET6)
+   };
+   // use first IPv4 address, if no IPv6 address
+   for(info = res; ((info != NULL) && (!(socklen)) ); info = info->ai_next)
    {
+      if (info->ai_addr->sa_family != AF_INET)
+         continue;
       socklen = res->ai_addrlen;
       memcpy(&sa.sa, res->ai_addr, socklen);
       inet_ntop(AF_INET, &sa.sin.sin_addr, addrstr, sizeof(addrstr));
@@ -648,6 +652,11 @@ my_socket(
       snprintf(logmsg, sizeof(logmsg), "UDPECHO %s:%hu (%s:%hu): %zu bytes\n", cnf_host, port, addrstr, port, cnf_packetsize);
    };
    freeaddrinfo(res);
+   if (!(socklen))
+   {
+      fprintf(stderr, "%s: unable to resolve host\n", prog_name);
+      return(-1);
+   };
    if (!(cnf_silent))
       printf("%s", logmsg);
 
