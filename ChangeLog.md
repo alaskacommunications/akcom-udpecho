@@ -7,6 +7,7 @@ All rights reserved.
 
 0.2.0
 -----
+   Released 2022/07/22
    - docs: updating README with correct URLs (syzdek)
    - akcom-udpecho: refactored network layer (syzdek)
    - akcom-udpecho: added --debug option to show packet (syzdek)
