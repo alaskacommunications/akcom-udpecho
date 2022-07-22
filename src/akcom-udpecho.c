@@ -132,13 +132,6 @@ struct udp_echo_plus
 };
 
 
-union udp_buffer
-{
-   uint8_t              * data;
-   struct udp_echo_plus * echoplus;
-};
-
-
 /////////////////
 //             //
 //  Variables  //
@@ -237,8 +230,8 @@ main(
    struct timespec           start;
    struct timespec           now;
    struct pollfd             fds[2];
-   union udp_buffer          sndbuff;
-   union udp_buffer          rcvbuff;
+   struct udp_echo_plus *    sndbuff;
+   struct udp_echo_plus *    rcvbuff;
 
    // getopt options
    static char   short_opt[] = "46c:dehi:qrs:t:vV";
@@ -351,36 +344,36 @@ main(
       cnf_packetsize = sizeof(struct udp_echo_plus);
 
    // allocate receive buffer
-   if ((rcvbuff.data = malloc(cnf_packetsize)) == NULL)
+   if ((rcvbuff = malloc(cnf_packetsize)) == NULL)
    {
       fprintf(stderr, "%s: out of virtual memory\n", prog_name);
       return(1);
    };
 
    // allocate send buffer
-   if ((sndbuff.data = malloc(cnf_packetsize)) == NULL)
+   if ((sndbuff = malloc(cnf_packetsize)) == NULL)
    {
       fprintf(stderr, "%s: out of virtual memory\n", prog_name);
-      free(rcvbuff.data);
+      free(rcvbuff);
       return(1);
    };
-   memset(sndbuff.data, 0, sizeof(struct udp_echo_plus));
-   sndbuff.echoplus->iteration  = htonl(1);
+   memset(sndbuff, 0, sizeof(struct udp_echo_plus));
+   sndbuff->iteration  = htonl(1);
    if (cnf_packetsize > sizeof(struct udp_echo_plus))
    {
       if ((fd = open("/dev/urandom", O_RDONLY)) == -1)
       {
          fprintf(stderr, "%s: open(/dev/urandom): %s\n", prog_name, strerror(errno));
-         free(rcvbuff.data);
-         free(sndbuff.data);
+         free(rcvbuff);
+         free(sndbuff);
          return(1);
       };
-      if (read(fd, sndbuff.echoplus->bytes, cnf_packetsize-sizeof(struct udp_echo_plus)) == -1)
+      if (read(fd, sndbuff->bytes, cnf_packetsize-sizeof(struct udp_echo_plus)) == -1)
       {
          fprintf(stderr, "%s: read(): %s\n", prog_name, strerror(errno));
          close(fd);
-         free(sndbuff.data);
-         free(rcvbuff.data);
+         free(sndbuff);
+         free(rcvbuff);
          return(1);
       };
       close(fd);
@@ -399,8 +392,8 @@ main(
    // resolve host
    if ((s = my_socket(cnf_host, cnf_port, cnf_ai_family)) == -1)
    {
-      free(sndbuff.data);
-      free(rcvbuff.data);
+      free(sndbuff);
+      free(rcvbuff);
       return(1);
    };
    fds[0].fd      = s;
@@ -447,32 +440,32 @@ main(
       if ((count < (epoch/(10000*cnf_interval))) && ((count < cnf_count) || (!(cnf_count))) )
       {
          count++;
-         sndbuff.echoplus->req_sn            = htonl(count);
-         send(s, sndbuff.data, cnf_packetsize, 0);
+         sndbuff->req_sn            = htonl(count);
+         send(s, sndbuff, cnf_packetsize, 0);
       };
 
       // receive UDP echo response
       if ((rc = poll(fds, 1, 0)) > 0)
       {
-         if ((size = recv(s, rcvbuff.data, cnf_packetsize, 0)) == (ssize_t)cnf_packetsize)
+         if ((size = recv(s, rcvbuff, cnf_packetsize, 0)) == (ssize_t)cnf_packetsize)
          {
-            rcvbuff.echoplus->req_sn      = ntohl(rcvbuff.echoplus->req_sn);
-            rcvbuff.echoplus->res_sn      = ntohl(rcvbuff.echoplus->res_sn);
-            rcvbuff.echoplus->recv_time   = ntohl(rcvbuff.echoplus->recv_time);
-            rcvbuff.echoplus->reply_time  = ntohl(rcvbuff.echoplus->reply_time);
-            rcvbuff.echoplus->failures    = ntohl(rcvbuff.echoplus->failures);
-            rcvbuff.echoplus->iteration   = ntohl(1);
+            rcvbuff->req_sn      = ntohl(rcvbuff->req_sn);
+            rcvbuff->res_sn      = ntohl(rcvbuff->res_sn);
+            rcvbuff->recv_time   = ntohl(rcvbuff->recv_time);
+            rcvbuff->reply_time  = ntohl(rcvbuff->reply_time);
+            rcvbuff->failures    = ntohl(rcvbuff->failures);
+            rcvbuff->iteration   = ntohl(1);
             if ((cnf_debug))
             {
-               printf("   packet: GenSN/REspSN:    %08" PRIx32 " %08" PRIx32 "\n", rcvbuff.echoplus->req_sn, rcvbuff.echoplus->res_sn);
-               printf("           Recv/Reply Time: %08" PRIx32 " %08" PRIx32 "\n", rcvbuff.echoplus->recv_time, rcvbuff.echoplus->reply_time);
-               printf("           Failures:        %08" PRIx32 "\n",               rcvbuff.echoplus->failures);
-               printf("           Iteration:       %08" PRIx32 "\n",               rcvbuff.echoplus->iteration);
+               printf("   packet: GenSN/REspSN:    %08" PRIx32 " %08" PRIx32 "\n", rcvbuff->req_sn, rcvbuff->res_sn);
+               printf("           Recv/Reply Time: %08" PRIx32 " %08" PRIx32 "\n", rcvbuff->recv_time, rcvbuff->reply_time);
+               printf("           Failures:        %08" PRIx32 "\n",               rcvbuff->failures);
+               printf("           Iteration:       %08" PRIx32 "\n",               rcvbuff->iteration);
             };
             rcvd++;
-            delay      = rcvbuff.echoplus->reply_time - rcvbuff.echoplus->recv_time;
+            delay      = rcvbuff->reply_time - rcvbuff->recv_time;
             delay     /= 100000000;
-            epoch     -= (rcvbuff.echoplus->req_sn * 10000);
+            epoch     -= (rcvbuff->req_sn * 10000);
             epoch_adj  = epoch - delay;
             avg       += epoch;
             avg_adj   += epoch_adj;
@@ -487,8 +480,8 @@ main(
             if ((cnf_echoplus))
             {
                printf("udpecho_seq=%u failures=%" PRIu32 " time=%" PRIu64 ".%" PRIu64 " ms delay=%" PRIu64 ".%" PRIu64 " ms adj_time=%" PRIu64 ".%" PRIu64 " ms\n",
-                      rcvbuff.echoplus->req_sn,
-                      rcvbuff.echoplus->failures,
+                      rcvbuff->req_sn,
+                      rcvbuff->failures,
                       epoch/10, epoch%10,
                       delay/10, delay%10,
                       epoch_adj/10, epoch_adj%10
@@ -496,7 +489,7 @@ main(
             } else
             {
                printf("udpecho_seq=%u time=%" PRIu64 ".%" PRIu64 " ms\n",
-                      rcvbuff.echoplus->req_sn,
+                      rcvbuff->req_sn,
                       epoch/10, epoch%10
                      );
             };
@@ -535,8 +528,8 @@ main(
 
 
    // free resources
-   free(sndbuff.data);
-   free(rcvbuff.data);
+   free(sndbuff);
+   free(rcvbuff);
    close(s);
 
 
