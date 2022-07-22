@@ -723,8 +723,8 @@ my_timespec_delta(
    delta->tv_sec  -= ts2->tv_sec;
    delta->tv_nsec -= ts2->tv_nsec;
 
-   usec  = my_sec2usec(delta->tv_sec);
-   usec += my_nsec2usec(delta->tv_nsec);
+   usec  = my_sec2usec((uint64_t)delta->tv_sec);
+   usec += my_nsec2usec((uint64_t)delta->tv_nsec);
 
    return(usec);
 }
