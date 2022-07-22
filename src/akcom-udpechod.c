@@ -180,33 +180,68 @@ static struct udp_echo_plus state =
 #pragma mark - Prototypes
 
 // main statement
-int main(int argc, char * argv[]);
+extern int
+main(
+         int                           argc,
+         char *                        argv[] );
+
 
 // daemonize process
-int my_daemonize(void);
+static int
+my_daemonize(
+         void );
+
 
 // display debug message
-void my_debug(const char * fmt, ...);
+static void
+my_debug(
+         const char *                  fmt,
+         ... );
+
 
 // display error message
-void my_error(const char * fmt, ...);
+static void
+my_error(
+         const char *                  fmt,
+         ... );
+
 
 // log connection
-int my_log_conn(int mode, size_t * connp, union my_sa * sap,
-   struct udp_echo_plus * msgp, ssize_t ssize, struct timespec * tsp,
-   useconds_t delay);
+static int
+my_log_conn(
+         int                           mode,
+         size_t *                      connp,
+         union my_sa *                 sap,
+         struct udp_echo_plus *        msgp,
+         ssize_t                       ssize,
+         struct timespec *             tsp,
+         useconds_t                    delay );
+
 
 // main loop
-int my_loop(int s, size_t * connp);
+static int
+my_loop(
+         int                           s,
+         size_t *                      connp );
+
 
 // signal handler
-void my_sighandler(int signum);
+static void
+my_sighandler(
+         int                           signum );
+
 
 // display program usage
-void my_usage(void);
+static void
+my_usage(
+         void );
+
 
 // display program usage error
-void my_usage_error(const char * fmt, ...);
+static void
+my_usage_error(
+         const char *                  fmt,
+         ... );
 
 
 /////////////////
@@ -217,7 +252,10 @@ void my_usage_error(const char * fmt, ...);
 #pragma mark - Functions
 
 // main statement
-int main(int argc, char * argv[])
+int
+main(
+         int                           argc,
+         char *                        argv[] )
 {
    char                    * ptr;
    int                       c;
@@ -437,7 +475,9 @@ int main(int argc, char * argv[])
 
 
 // daemonize process
-int my_daemonize(void)
+int
+my_daemonize(
+         void )
 {
    int                       s;
    int                       rc;
@@ -690,7 +730,10 @@ int my_daemonize(void)
 
 
 // display debug message
-void my_debug(const char * fmt, ...)
+void
+my_debug(
+         const char *                  fmt,
+         ... )
 {
    va_list args;
 
@@ -710,7 +753,10 @@ void my_debug(const char * fmt, ...)
 
 
 // display error message
-void my_error(const char * fmt, ...)
+void
+my_error(
+         const char *                  fmt,
+         ... )
 {
    va_list args;
 
@@ -727,9 +773,15 @@ void my_error(const char * fmt, ...)
 
 
 // log connection
-int my_log_conn(int mode, size_t * connp, union my_sa * sap,
-   struct udp_echo_plus * msgp, ssize_t ssize, struct timespec * tsp,
-   useconds_t delay)
+int
+my_log_conn(
+      int                              mode,
+      size_t *                         connp,
+      union my_sa *                    sap,
+      struct udp_echo_plus *           msgp,
+      ssize_t                          ssize,
+      struct timespec *                tsp,
+      useconds_t                       delay )
 {
    const char               * mode_name;
    char                       addr_str[INET6_ADDRSTRLEN];
@@ -816,7 +868,10 @@ int my_log_conn(int mode, size_t * connp, union my_sa * sap,
 
 
 // main loop
-int my_loop(int s, size_t * connp)
+int
+my_loop(
+         int                           s,
+         size_t *                      connp )
 {
    socklen_t                  sinlen;
    ssize_t                    ssize;
@@ -907,7 +962,9 @@ int my_loop(int s, size_t * connp)
 
 
 // signal handler
-void my_sighandler(int signum)
+void
+my_sighandler(
+         int                           signum )
 {
    signal(signum, my_sighandler);
    should_stop = 1;
@@ -916,7 +973,9 @@ void my_sighandler(int signum)
 
 
 // display program usage
-void my_usage(void)
+void
+my_usage(
+         void )
 {
    printf("Usage: %s [options]\n", prog_name);
    printf("OPTIONS:\n");
@@ -940,7 +999,10 @@ void my_usage(void)
 
 
 // display program usage error
-void my_usage_error(const char * fmt, ...)
+void
+my_usage_error(
+         const char *                  fmt,
+         ... )
 {
    va_list args;
 
