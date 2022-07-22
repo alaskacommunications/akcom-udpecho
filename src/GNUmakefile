@@ -47,8 +47,6 @@ CFLAGS					= -O2 \
 					  -pedantic \
 					   -W \
 					  -Wall \
-					  -Wextra \
-					  -Weverything \
 					  -Wno-unknown-pragmas \
 					  -Wno-format-nonliteral \
 					  -Wno-reserved-id-macro \
