@@ -69,11 +69,16 @@ Utilities
 akcom-udpecho
 -------------
 
-akcom-udpecho is a shell utility for testing UDP echo servers.
+_akcom-udpecho_ is a shell utility for testing UDP echo servers. _akcom-udpecho_
+supports for RFC 862 compliant servers and TR-143 UDPEchoPlus compliant
+servers.  If the UDP Echo variant is not specified, _akcom-udpecho_ will 
+attempt to determine the variant by examining the __TestRespSN__, 
+__TestRespRecvTimeStamp__, and __TestRespReplyTimeStamp__ fields of the
+UDPEchoPlus packet for non-zero values.
 
 Example usage (RFC 862 compliant):
 
-      $ akcom-udpecho -c 5 udpecho.example.com 30006
+      $ akcom-udpecho -c 5 --rfc udpecho.example.com 30006
       UDPECHO udpecho.example.com:30006 (209.112.131.108:30006): 20 bytes
       udpecho_seq=1 time=17.3 ms
       udpecho_seq=2 time=13.7 ms
@@ -105,7 +110,11 @@ Example usage (TR-143 UDPEchoPlus compliant):
 akcom-udpechod
 --------------
 
-akcom-udpechod is simple UDP echo server.
+_akcom-udpechod_ is simple UDP echo server.  The drop and delay feature should
+only be used by single client for testing an implementation in a development
+environment. Currently _akcom-udpechod_ processes each packet sequentially 
+which will skew all packets received before the previous packets have been 
+processed when using the drop and delay feature.
 
 Example usage (RFC 862 compliant):
 
@@ -115,7 +124,8 @@ Example usage (RFC 862 compliant):
          --user nobody \
          --group nobody \
          --delay=10000 \
-         --drop=10
+         --drop=10 \
+         --rfc
 
 Example usage (TR-143 UDPEchoPlus compliant):
 
