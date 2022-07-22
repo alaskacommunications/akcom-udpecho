@@ -522,8 +522,9 @@ int main(int argc, char * argv[])
                max_adj = epoch_adj;
             if ((cnf_echoplus))
             {
-               printf("udpecho_seq=%u time=%" PRIu64 ".%" PRIu64 " ms delay=%" PRIu64 ".%" PRIu64 " ms adj_time=%" PRIu64 ".%" PRIu64 " ms\n",
+               printf("udpecho_seq=%u failures=%" PRIu32 " time=%" PRIu64 ".%" PRIu64 " ms delay=%" PRIu64 ".%" PRIu64 " ms adj_time=%" PRIu64 ".%" PRIu64 " ms\n",
                       rcvbuff.echoplus->req_sn,
+                      rcvbuff.echoplus->failures,
                       epoch/10, epoch%10,
                       delay/10, delay%10,
                       epoch_adj/10, epoch_adj%10
