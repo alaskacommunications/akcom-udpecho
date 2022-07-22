@@ -76,6 +76,24 @@ attempt to determine the variant by examining the __TestRespSN__,
 __TestRespRecvTimeStamp__, and __TestRespReplyTimeStamp__ fields of the
 UDPEchoPlus packet for non-zero values.
 
+_akcom-udpecho_ usage:
+
+      Usage: akcom-udpecho [options] host [port]
+      OPTIONS:
+        -4                        connect via IPv4 only
+        -6                        connect via IPv6 only
+        -c count                  stop after sending count packets
+        -d, --debug               print packet debugging information
+        -e, --echoplus            expect echo plus response (default: auto detect)
+        -h, --help                print this help and exit
+        -i interval               interval between packet (default: 1 sec)
+        -r, --rfc                 expect RFC compliant response (default: auto detect)
+        -q, --quiet, --silent     do not print messages
+        -s packetsize             size of data bytes to be sent. (default: 40 bytes)
+        -t sec                    response timeout (default: 5 sec)
+        -v, --verbose             enable verbose output
+        -V, --version             print version number and exit
+
 Example usage (RFC 862 compliant):
 
       $ akcom-udpecho -c 5 --rfc udpecho.example.com 30006
@@ -115,6 +133,25 @@ features should not be used concurrently by multiple clients. Currently
 _akcom-udpechod_ processes each packet sequentially  which causes all packets 
 received before previous packets have been processed to be skewed when using 
 the __drop__ and __delay__ features.
+
+_akcom-udpechod_ usage:
+
+      Usage: akcom-udpechod [options]
+      OPTIONS:
+        -d num,  --drop=num       set packet drop probability [0-99] (default: 0%)
+        -D usec, --delay=usec     set echo delay range to microseconds (default: 0 us)
+        -e,      --echoplus       enable echo plus, not RFC compliant
+        -f str,  --facility=str   set syslog facility (default: daemon)
+        -g gid,  --group=gid      setgid to gid (default: none)
+        -h,      --help           print this help and exit
+        -l addr, --listen=addr    bind to IP address (default: all)
+        -n,      --foreground     do not fork
+        -p port, --port=port      list on port number (default: 30006)
+        -P file, --pidfile=file   PID file (default: /var/run/akcom-udpechod.pid)
+        -r,      --rfc            RFC compliant echo protocol (default)
+        -u uid,  --user=uid       setuid to uid (default: none)
+        -v,      --verbose        enable verbose output
+        -V,      --version        print version number and exit
 
 Example usage (RFC 862 compliant):
 
