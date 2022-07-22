@@ -56,6 +56,11 @@
 ///////////////
 #pragma mark - Headers
 
+// defined in the Single UNIX Specification
+#ifndef _XOPEN_SOURCE
+#   define _XOPEN_SOURCE 600
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -575,7 +580,7 @@ my_daemonize(
    my_debug("pidfile: %s", cnf_pidfile);
 
    // determines interface on which to listen
-   bzero(&sa, sizeof(sa));
+   memset(&sa, 0, sizeof(sa));
    if (!(cnf_listen))
    {
       sa.sin6.sin6_family = AF_INET6;
