@@ -120,7 +120,7 @@ union my_sa
 };
 
 
-struct udp_echo_plus
+typedef struct udp_echo_plus
 {
    uint32_t  req_sn;
    uint32_t  res_sn;
@@ -129,7 +129,7 @@ struct udp_echo_plus
    uint32_t  failures;
    uint32_t  iteration;
    uint8_t   bytes[];
-};
+} echoplus_t;
 
 
 /////////////////
@@ -150,7 +150,7 @@ static const char        * cnf_port         = "30006";
 static const char        * cnf_host         = NULL;
 static int                 cnf_ai_family    = PF_UNSPEC;
 static unsigned long       cnf_interval     = 1;
-static size_t              cnf_packetsize   = sizeof(struct udp_echo_plus);
+static size_t              cnf_packetsize   = sizeof(echoplus_t);
 static int                 should_stop      = 0;
 
 
@@ -230,8 +230,8 @@ main(
    struct timespec           start;
    struct timespec           now;
    struct pollfd             fds[2];
-   struct udp_echo_plus *    sndbuff;
-   struct udp_echo_plus *    rcvbuff;
+   echoplus_t *              sndbuff;
+   echoplus_t *              rcvbuff;
 
    // getopt options
    static char   short_opt[] = "46c:dehi:qrs:t:vV";
@@ -340,8 +340,8 @@ main(
    };
 
    // adjust defaults
-   if (cnf_packetsize < sizeof(struct udp_echo_plus))
-      cnf_packetsize = sizeof(struct udp_echo_plus);
+   if (cnf_packetsize < sizeof(echoplus_t))
+      cnf_packetsize = sizeof(echoplus_t);
 
    // allocate receive buffer
    if ((rcvbuff = malloc(cnf_packetsize)) == NULL)
@@ -357,9 +357,9 @@ main(
       free(rcvbuff);
       return(1);
    };
-   memset(sndbuff, 0, sizeof(struct udp_echo_plus));
+   memset(sndbuff, 0, sizeof(echoplus_t));
    sndbuff->iteration  = htonl(1);
-   if (cnf_packetsize > sizeof(struct udp_echo_plus))
+   if (cnf_packetsize > sizeof(echoplus_t))
    {
       if ((fd = open("/dev/urandom", O_RDONLY)) == -1)
       {
@@ -368,7 +368,7 @@ main(
          free(sndbuff);
          return(1);
       };
-      if (read(fd, sndbuff->bytes, cnf_packetsize-sizeof(struct udp_echo_plus)) == -1)
+      if (read(fd, sndbuff->bytes, cnf_packetsize-sizeof(echoplus_t)) == -1)
       {
          fprintf(stderr, "%s: read(): %s\n", prog_name, strerror(errno));
          close(fd);
