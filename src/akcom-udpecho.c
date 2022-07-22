@@ -293,7 +293,7 @@ main(
          break;
 
          case 't':
-         cnf_interval = (unsigned)strtoul(optarg, NULL, 10);
+         cnf_timeout  = (uint64_t)strtoull(optarg, NULL, 10);
          break;
 
          case 'v':
