@@ -147,6 +147,7 @@ union udp_buffer
 
 static const char        * prog_name        = PROGRAM_NAME;
 static uint32_t            cnf_count        = 0;
+static int                 cnf_debug        = 0;
 static int                 cnf_echoplus     = 0;
 static int                 cnf_verbose      = 0;
 static int                 cnf_silent       = 0;
@@ -222,9 +223,10 @@ int main(int argc, char * argv[])
    union udp_buffer          rcvbuff;
 
    // getopt options
-   static char   short_opt[] = "46c:ehi:qrs:t:vV";
+   static char   short_opt[] = "46c:dehi:qrs:t:vV";
    static struct option long_opt[] =
    {
+      {"debug",         no_argument,       0, 'd'},
       {"echoplus",      no_argument,       0, 'e'},
       {"help",          no_argument,       0, 'h'},
       {"quiet",         no_argument,       0, 'q'},
@@ -266,6 +268,10 @@ int main(int argc, char * argv[])
 
          case 'c':
          cnf_count = (uint32_t)strtoul(optarg, NULL, 10);
+         break;
+
+         case 'd':
+         cnf_debug = 1;
          break;
 
          case 'e':
@@ -492,6 +498,13 @@ int main(int argc, char * argv[])
             rcvbuff.echoplus->reply_time  = ntohl(rcvbuff.echoplus->reply_time);
             rcvbuff.echoplus->failures    = ntohl(rcvbuff.echoplus->failures);
             rcvbuff.echoplus->iteration   = ntohl(1);
+            if ((cnf_debug))
+            {
+               printf("   packet: GenSN/REspSN:    %08" PRIx32 " %08" PRIx32 "\n", rcvbuff.echoplus->req_sn, rcvbuff.echoplus->res_sn);
+               printf("           Recv/Reply Time: %08" PRIx32 " %08" PRIx32 "\n", rcvbuff.echoplus->recv_time, rcvbuff.echoplus->reply_time);
+               printf("           Failures:        %08" PRIx32 "\n",               rcvbuff.echoplus->failures);
+               printf("           Iteration:       %08" PRIx32 "\n",               rcvbuff.echoplus->iteration);
+            };
             rcvd++;
             delay      = rcvbuff.echoplus->reply_time - rcvbuff.echoplus->recv_time;
             delay     /= 100000000;
@@ -583,6 +596,7 @@ void my_usage(void)
    printf("  -4                        connect via IPv4 only\n");
    printf("  -6                        connect via IPv6 only\n");
    printf("  -c count                  stop after sending count packets\n");
+   printf("  -d, --debug               print packet debugging information\n");
    printf("  -e, --echoplus            expect echo plus response%s\n", ((cnf_echoplus)) ? " (default)" : "");
    printf("  -h, --help                print this help and exit\n");
    printf("  -i interval               interval between packet (default: %lu sec)\n", cnf_interval);
