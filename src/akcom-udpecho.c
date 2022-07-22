@@ -103,6 +103,13 @@
 #define PACKAGE_VERSION "0.0"
 #endif
 
+#define my_sec2usec( sec )   (  sec * 1000000 )
+#define my_sec2nsec( sec )   (  sec * 1000000000 )
+#define my_usec2sec( usec )  ( usec / 1000000 )
+#define my_usec2nsec( usec ) ( usec * 1000 )
+#define my_nsec2sec( nsec )  ( nsec / 1000000000 )
+#define my_nsec2usec( nsec ) ( nsec / 1000 )
+
 
 /////////////////
 //             //
