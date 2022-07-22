@@ -52,7 +52,6 @@ CFLAGS					= -O2 \
 					  -Wno-reserved-id-macro \
 					  -Wno-unused-macros \
 					  -DPACKAGE_VERSION='"$(PACKAGE_VERSION)"'
-LIBTOOL					?= libtool
 INSTALL					?= install
 PREFIX					?= /usr/local
 INSTALL_OPTS				?= --strip -D
@@ -60,8 +59,6 @@ INSTALL_OPTS				?= --strip -D
 
 PROGS					= akcom-udpecho \
 					  akcom-udpechod
-OBJS					= akcom-udpecho.lo \
-					  akcom-udpechod.lo
 
 
 .PHONY: all all-progs install clean uninstall notice
@@ -73,16 +70,16 @@ all: notice
 all-progs: $(PROGS)
 
 
-akcom-udpecho.lo: akcom-udpecho.c
-	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c akcom-udpecho.c
+akcom-udpecho.o: akcom-udpecho.c
 
 
-akcom-udpechod.lo: akcom-udpechod.c
-	$(LIBTOOL) --mode=compile --tag=CC gcc $(CFLAGS) -o $(@) -c akcom-udpechod.c
+akcom-udpecho: akcom-udpecho.o
 
 
-$(PROGS): $(OBJS)
-	$(LIBTOOL) --mode=link --tag=CC gcc $(CFLAGS) -o $(@) $(@).lo
+akcom-udpechod.o: akcom-udpechod.c
+
+
+akcom-udpechod: akcom-udpechod.o
 
 
 install: notice
@@ -124,8 +121,7 @@ uninstall:
 
 
 clean: notice
-	$(LIBTOOL) --mode=clean rm -f $(OBJS)
-	$(LIBTOOL) --mode=clean rm -f $(PROGS)
+	rm -f *.o *.lo $(PROGS)
 
 
 # end of Makefile
