@@ -110,11 +110,11 @@ Example usage (TR-143 UDPEchoPlus compliant):
 akcom-udpechod
 --------------
 
-_akcom-udpechod_ is simple UDP echo server.  The drop and delay feature should
-only be used by single client for testing an implementation in a development
-environment. Currently _akcom-udpechod_ processes each packet sequentially 
-which will skew all packets received before the previous packets have been 
-processed when using the drop and delay feature.
+_akcom-udpechod_ is simple UDP echo server.  The __drop__ and __delay__ 
+features should not be used concurrently by multiple clients. Currently 
+_akcom-udpechod_ processes each packet sequentially  which causes all packets 
+received before previous packets have been processed to be skewed when using 
+the __drop__ and __delay__ features.
 
 Example usage (RFC 862 compliant):
 
