@@ -295,7 +295,7 @@ main(
 
    // determines program name
    prog_name = argv[0];
-   if ((ptr = rindex(argv[0], '/')) != NULL)
+   if ((ptr = strrchr(argv[0], '/')) != NULL)
       prog_name = &ptr[1];
 
    // process arguments
