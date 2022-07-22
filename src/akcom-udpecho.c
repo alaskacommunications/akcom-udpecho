@@ -103,12 +103,23 @@
 #define PACKAGE_VERSION "0.0"
 #endif
 
+#define my_sec2msec( sec )   (  sec * 1000 )
 #define my_sec2usec( sec )   (  sec * 1000000 )
 #define my_sec2nsec( sec )   (  sec * 1000000000 )
-#define my_usec2sec( usec )  ( usec / 1000000 )
+
+#define my_msec2sec(  msec ) ( msec / 1000 )
+#define my_msec2usec( msec ) ( msec * 1000 )
+#define my_msec2nsec( msec ) ( msec * 1000000 )
+
+#define my_usec2sec(  usec ) ( usec / 1000000 )
+#define my_usec2msec( usec ) ( usec / 1000 )
 #define my_usec2nsec( usec ) ( usec * 1000 )
-#define my_nsec2sec( nsec )  ( nsec / 1000000000 )
+
+#define my_nsec2sec(  nsec ) ( nsec / 1000000000 )
+#define my_nsec2msec( nsec ) ( nsec / 1000000 )
 #define my_nsec2usec( nsec ) ( nsec / 1000 )
+
+#define my_usec2msec_tenths( usec ) ((usec%1000)/100)
 
 
 /////////////////
@@ -135,6 +146,7 @@ typedef struct udp_echo_plus
    uint32_t  reply_time;
    uint32_t  failures;
    uint32_t  iteration;
+   struct timespec   send_time;
    uint8_t   bytes[];
 } echoplus_t;
 
@@ -194,6 +206,12 @@ static void
    my_stop(
          int                           signum );
 
+
+extern uint64_t
+my_timespec_delta(
+         struct timespec *             ts1,
+         struct timespec *             ts2,
+         struct timespec *             delta );
 
 
 // display program usage
@@ -419,10 +437,10 @@ my_loop(
          echoplus_t *                  sndbuff )
 {
    int                     rc;
-   uint64_t                epoch;
-   uint64_t                epoch_adj;
-   uint64_t                epoch_max;
-   uint64_t                delay;
+   uint64_t                pckt_time;
+   uint64_t                pckt_time_adj;
+   uint64_t                epoch_usec;
+   uint64_t                pckt_delay;
    uint32_t                stats_sent;
    uint32_t                stats_rcvd;
    uint64_t                stats_max;
@@ -433,6 +451,7 @@ my_loop(
    uint64_t                stats_avg_adj;
    ssize_t                 size;
    struct pollfd           fds[2];
+   struct timespec         ts_sent;
    struct timespec         start;
    struct timespec         now;
 
@@ -454,90 +473,99 @@ my_loop(
    stats_avg      = 0;
    stats_avg_adj  = 0;
 
-   // start clock
+   // initialize timers
    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
    start.tv_sec -= cnf_interval;
-   epoch         = 0;
+   ts_sent.tv_sec  = start.tv_sec;
+   ts_sent.tv_nsec = start.tv_nsec;
 
    // master loop
    while (!(should_stop))
    {
       // calculate loop epoch
       clock_gettime(CLOCK_MONOTONIC_RAW, &now);
-      epoch  = ((uint64_t)now.tv_sec   * 10000) + ((uint64_t)now.tv_nsec   / 100000);
-      epoch -= ((uint64_t)start.tv_sec * 10000) + ((uint64_t)start.tv_nsec / 100000);
+      epoch_usec  = my_sec2usec((uint64_t)now.tv_sec)   + my_nsec2usec((uint64_t)now.tv_nsec);
+      epoch_usec -= my_sec2usec((uint64_t)start.tv_sec) + my_nsec2usec((uint64_t)start.tv_nsec);
 
       // trigger stop
       if ( ((cnf_count)) && (stats_sent >= cnf_count) )
       {
-         epoch_max  = cnf_count * (uint64_t)cnf_interval * 10000;
-         epoch_max += (uint64_t)cnf_timeout * 10000;
-         if (( epoch >= epoch_max) || (stats_rcvd >= stats_sent))
+         if (stats_rcvd == stats_sent)
+         {
             should_stop = 1;
+            continue;
+         };
+         if (my_timespec_delta(&now, &ts_sent, NULL) > my_sec2usec((uint64_t)cnf_timeout))
+         {
+            should_stop = 1;
+            continue;
+         };
       };
 
       // send UDP echo request
-      if ((stats_sent < (epoch/(10000*cnf_interval))) && ((stats_sent < cnf_count) || (!(cnf_count))) )
+      if ((stats_sent < (epoch_usec/my_sec2usec(cnf_interval))) && ((stats_sent < cnf_count) || (!(cnf_count))) )
       {
          stats_sent++;
          sndbuff->req_sn            = htonl((uint32_t)stats_sent);
+         sndbuff->send_time.tv_sec  = now.tv_sec;
+         sndbuff->send_time.tv_nsec = now.tv_nsec;
+         ts_sent.tv_sec             = now.tv_sec;
+         ts_sent.tv_nsec            = now.tv_nsec;
          send(s, sndbuff, cnf_packetsize, 0);
       };
 
       // receive UDP echo response
-      if ((rc = poll(fds, 1, 0)) > 0)
+      if ((rc = poll(fds, 1, 0)) <= 0)
       {
-         if ((size = recv(s, rcvbuff, cnf_packetsize, 0)) == (ssize_t)cnf_packetsize)
-         {
-            rcvbuff->req_sn      = ntohl(rcvbuff->req_sn);
-            rcvbuff->res_sn      = ntohl(rcvbuff->res_sn);
-            rcvbuff->recv_time   = ntohl(rcvbuff->recv_time);
-            rcvbuff->reply_time  = ntohl(rcvbuff->reply_time);
-            rcvbuff->failures    = ntohl(rcvbuff->failures);
-            rcvbuff->iteration   = ntohl(1);
-            if ((cnf_debug))
-            {
-               printf("   packet: GenSN/REspSN:    %08" PRIx32 " %08" PRIx32 "\n", rcvbuff->req_sn, rcvbuff->res_sn);
-               printf("           Recv/Reply Time: %08" PRIx32 " %08" PRIx32 "\n", rcvbuff->recv_time, rcvbuff->reply_time);
-               printf("           Failures:        %08" PRIx32 "\n",               rcvbuff->failures);
-               printf("           Iteration:       %08" PRIx32 "\n",               rcvbuff->iteration);
-            };
-            stats_rcvd++;
-            delay      = rcvbuff->reply_time - rcvbuff->recv_time;
-            delay     /= 100000000;
-            epoch     -= (rcvbuff->req_sn * 10000);
-            epoch_adj  = epoch - delay;
-            stats_avg       += epoch;
-            stats_avg_adj   += epoch_adj;
-            if ( (!(stats_min)) || (epoch < stats_min) )
-               stats_min = epoch;
-            if ( (!(stats_max)) || (epoch > stats_max) )
-               stats_max = epoch;
-            if ( (!(stats_min_adj)) || (epoch_adj < stats_min_adj) )
-               stats_min_adj = epoch_adj;
-            if ( (!(stats_max_adj)) || (epoch_adj > stats_max_adj) )
-               stats_max_adj = epoch_adj;
-            if ((cnf_echoplus))
-            {
-               printf("udpecho_seq=%u failures=%" PRIu32 " time=%" PRIu64 ".%" PRIu64 " ms delay=%" PRIu64 ".%" PRIu64 " ms adj_time=%" PRIu64 ".%" PRIu64 " ms\n",
-                      rcvbuff->req_sn,
-                      rcvbuff->failures,
-                      epoch/10, epoch%10,
-                      delay/10, delay%10,
-                      epoch_adj/10, epoch_adj%10
-                     );
-            } else
-            {
-               printf("udpecho_seq=%u time=%" PRIu64 ".%" PRIu64 " ms\n",
-                      rcvbuff->req_sn,
-                      epoch/10, epoch%10
-                     );
-            };
-         };
-      } else
-      {
-         usleep(100);
+         usleep(50);
+         continue;
       };
+
+      // reads packet
+      if ((size = recv(s, rcvbuff, cnf_packetsize, 0)) != (ssize_t)cnf_packetsize)
+         continue;
+      rcvbuff->req_sn      = ntohl(rcvbuff->req_sn);
+      rcvbuff->res_sn      = ntohl(rcvbuff->res_sn);
+      rcvbuff->recv_time   = ntohl(rcvbuff->recv_time);
+      rcvbuff->reply_time  = ntohl(rcvbuff->reply_time);
+      rcvbuff->failures    = ntohl(rcvbuff->failures);
+      rcvbuff->iteration   = ntohl(1);
+      if ((cnf_debug))
+      {
+         printf("   packet: GenSN/REspSN:    %08" PRIx32 " %08" PRIx32 "\n", rcvbuff->req_sn, rcvbuff->res_sn);
+         printf("           Recv/Reply Time: %08" PRIx32 " %08" PRIx32 "\n", rcvbuff->recv_time, rcvbuff->reply_time);
+         printf("           Failures:        %08" PRIx32 "\n",               rcvbuff->failures);
+         printf("           Iteration:       %08" PRIx32 "\n",               rcvbuff->iteration);
+      };
+      stats_rcvd++;
+
+      // performs stats on packet
+      pckt_time      = my_timespec_delta(&now, &rcvbuff->send_time, NULL);
+      pckt_delay     = rcvbuff->reply_time - rcvbuff->recv_time;
+      pckt_time_adj  = pckt_time - pckt_delay;
+      stats_avg      += pckt_time;
+      stats_avg_adj  += pckt_time_adj;
+      stats_min      = ( (!(stats_min)) || (pckt_time < stats_min) ) ? pckt_time : stats_min;
+      stats_max      = ( (!(stats_max)) || (pckt_time > stats_max) ) ? pckt_time : stats_max;
+      stats_min_adj  = ( (!(stats_min_adj)) || (pckt_time_adj < stats_min_adj) ) ? pckt_time_adj : stats_min_adj;
+      stats_max_adj  = ( (!(stats_max_adj)) || (pckt_time_adj > stats_max_adj) ) ? pckt_time_adj : stats_max_adj;
+
+      // print packet
+      if (!(cnf_echoplus))
+      {
+         printf("udpecho_seq=%u time=%" PRIu64 ".%" PRIu64 " ms\n",
+               rcvbuff->req_sn,
+               my_usec2msec(pckt_time), ((pckt_time%1000)/100)
+         );
+         continue;
+      };
+      printf("udpecho_seq=%u failures=%" PRIu32 " time=%" PRIu64 ".%" PRIu64 " ms delay=%" PRIu64 ".%" PRIu64 " ms adj_time=%" PRIu64 ".%" PRIu64 " ms\n",
+               rcvbuff->req_sn,
+               rcvbuff->failures,
+               my_usec2msec(pckt_time),     my_usec2msec_tenths(pckt_time),
+               my_usec2msec(pckt_delay),    my_usec2msec_tenths(pckt_delay),
+               my_usec2msec(pckt_time_adj), my_usec2msec_tenths(pckt_time_adj)
+      );
    };
 
    if (!(cnf_silent))
@@ -549,19 +577,19 @@ my_loop(
              stats_rcvd,
              ((stats_sent - stats_rcvd) * 100) / stats_sent,
              (((stats_sent - stats_rcvd) * 1000) / stats_sent) % 10
-            );
+      );
       printf("round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
-             stats_min/10,        stats_min%10,
-             (stats_avg/stats_rcvd)/10, (stats_avg/stats_rcvd)%10,
-             stats_max/10,        stats_max%10
-            );
+             my_usec2msec(stats_min),            my_usec2msec_tenths(stats_min),
+             my_usec2msec(stats_avg/stats_rcvd), my_usec2msec_tenths(stats_avg/stats_rcvd),
+             my_usec2msec(stats_max),            my_usec2msec_tenths(stats_max)
+      );
       if ((cnf_echoplus))
       {
          printf("adjusted round-trip min/avg/max = %" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 "/%" PRIu64 ".%" PRIu64 " ms\n",
-                stats_min_adj/10,        stats_min_adj%10,
-                (stats_avg_adj/stats_rcvd)/10, (stats_avg_adj/stats_rcvd)%10,
-                stats_max_adj/10,        stats_max_adj%10
-               );
+                my_usec2msec(stats_min_adj),            my_usec2msec_tenths(stats_min_adj),
+                my_usec2msec(stats_avg_adj/stats_rcvd), my_usec2msec_tenths(stats_avg_adj/stats_rcvd),
+                my_usec2msec(stats_max_adj),            my_usec2msec_tenths(stats_max_adj)
+         );
       };
    };
 
@@ -648,6 +676,39 @@ my_stop(
    should_stop = 1;
    signal(signum, my_stop);
    return;
+}
+
+
+// calculates delta between timespecs and returns result as microscond
+uint64_t
+my_timespec_delta(
+         struct timespec *             ts1,
+         struct timespec *             ts2,
+         struct timespec *             delta )
+{
+   struct timespec ts;
+   uint64_t        usec;
+
+   assert(ts1   != NULL);
+   assert(ts2   != NULL);
+
+   if (!(delta))
+      delta = &ts;
+
+   delta->tv_sec  = ts1->tv_sec;
+   delta->tv_nsec = ts1->tv_nsec;
+   if (delta->tv_nsec < ts2->tv_nsec)
+   {
+      delta->tv_sec--;
+      delta->tv_nsec += my_sec2nsec(1);
+   };
+   delta->tv_sec  -= ts2->tv_sec;
+   delta->tv_nsec -= ts2->tv_nsec;
+
+   usec  = my_sec2usec(delta->tv_sec);
+   usec += my_nsec2usec(delta->tv_nsec);
+
+   return(usec);
 }
 
 
