@@ -167,16 +167,30 @@ static int                 should_stop      = 0;
 #pragma mark - Prototypes
 
 // main statement
-int main(int argc, char * argv[]);
+extern int
+main(
+         int                           argc,
+         char *                        argv[] );
+
 
 // signal system stop
-void my_stop(int signum);
+static void
+   my_stop(
+         int                           signum );
+
+
 
 // display program usage
-void my_usage(void);
+static void
+my_usage(
+      void );
+
 
 // display program usage error
-void my_usage_error(const char * fmt, ...);
+static void
+my_usage_error(
+      const char *                     fmt,
+      ... );
 
 
 /////////////////
@@ -187,7 +201,10 @@ void my_usage_error(const char * fmt, ...);
 #pragma mark - Functions
 
 // main statement
-int main(int argc, char * argv[])
+int
+main(
+         int                           argc,
+         char *                        argv[] )
 {
    int                       c;
    int                       s;
@@ -581,7 +598,9 @@ int main(int argc, char * argv[])
 
 
 // signal system stop
-void my_stop(int signum)
+void
+my_stop(
+         int                           signum )
 {
    should_stop = 1;
    signal(signum, my_stop);
@@ -590,7 +609,9 @@ void my_stop(int signum)
 
 
 // display program usage
-void my_usage(void)
+void
+my_usage(
+         void )
 {
    printf("Usage: %s [options] host [port]\n", prog_name);
    printf("OPTIONS:\n");
@@ -613,7 +634,10 @@ void my_usage(void)
 
 
 // display program usage error
-void my_usage_error(const char * fmt, ...)
+void
+my_usage_error(
+         const char *                  fmt,
+         ... )
 {
    va_list args;
 
