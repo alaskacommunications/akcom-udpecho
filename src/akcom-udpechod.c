@@ -502,7 +502,7 @@ my_daemonize(
    // check for existing instance
    fs = NULL;
    my_debug("checking for existing PID file (%s)", cnf_pidfile);
-   if ((rc = stat(cnf_pidfile, &sb)) == -1)
+   if (stat(cnf_pidfile, &sb) == -1)
    {
       if (errno != ENOENT)
       {
@@ -520,7 +520,7 @@ my_daemonize(
    {
       fscanf(fs, "%i", &pid);
       fclose(fs);
-      if ((rc = kill(pid, 0)) == -1)
+      if (kill(pid, 0) == -1)
       {
          if (errno == ESRCH)
          {
@@ -548,7 +548,7 @@ my_daemonize(
       return(-1);
    };
    my_debug("temp pidfile: %s", pidfile);
-   if ((rc = link(pidfile, cnf_pidfile)) == -1)
+   if (link(pidfile, cnf_pidfile) == -1)
    {
       my_error("mkstemp(): %s", strerror(errno));
       close(fd);
@@ -556,7 +556,7 @@ my_daemonize(
       return(-1);
    };
    unlink(pidfile);
-   if ((rc = fchmod(fd, 0644)) == -1)
+   if (fchmod(fd, 0644) == -1)
    {
       my_error("fchmod(): %s", strerror(errno));
       close(fd);
@@ -565,7 +565,7 @@ my_daemonize(
    if ( (cnf_uid != getuid()) ||
         (cnf_gid != getgid()) )
    {
-      if ((rc = fchown(fd, cnf_uid, cnf_gid)) == -1)
+      if (fchown(fd, cnf_uid, cnf_gid) == -1)
       {
          my_error("fchown(): %s", strerror(errno));
          close(fd);
@@ -584,7 +584,7 @@ my_daemonize(
       socklen             = sizeof(struct sockaddr_in6);
    } else
    {
-      if ((rc = inet_pton(AF_INET, cnf_listen, &sa.sin.sin_addr)) == 1)
+      if (inet_pton(AF_INET, cnf_listen, &sa.sin.sin_addr) == 1)
       {
          sa.sin.sin_family   = AF_INET;
          sa.sin.sin_port     = htons(cnf_port);
@@ -619,7 +619,7 @@ my_daemonize(
    // set socket options
    my_debug("setting socket options");
    opt = 1;
-   if ((rc = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(int))) == -1)
+   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(int)) == -1)
    {
       my_error("setsockopt(SO_REUSEADDR): %s", strerror(errno));
       close(s);
@@ -630,7 +630,7 @@ my_daemonize(
 
    // bind socket to interface
    my_debug("binding socket");
-   if ((rc = bind(s, &sa.sa, socklen)) == -1)
+   if (bind(s, &sa.sa, socklen) == -1)
    {
       my_error("bind(): %s", strerror(errno));
       close(s);
@@ -641,7 +641,7 @@ my_daemonize(
 
    // log socket address
    socklen = sizeof(struct sockaddr_storage);
-   if ((rc = getsockname(s, &sa.sa, &socklen)) == -1)
+   if (getsockname(s, &sa.sa, &socklen) == -1)
    {
       my_error("getsockname(): %s", strerror(errno));
       close(s);
@@ -670,7 +670,7 @@ my_daemonize(
    };
 
    // change ownership
-   if ( (getgid() != cnf_gid) && ((rc = setregid(cnf_gid, cnf_gid)) == -1) )
+   if ( (getgid() != cnf_gid) && (setregid(cnf_gid, cnf_gid) == -1) )
    {
       my_error("getgid(): %s", strerror(errno));
       close(s);
@@ -678,7 +678,7 @@ my_daemonize(
       unlink(cnf_pidfile);
       return(-1);
    };
-   if ( (getuid() != cnf_uid) && ((rc = setreuid(cnf_uid, cnf_uid)) == -1) )
+   if ( (getuid() != cnf_uid) && (setreuid(cnf_uid, cnf_uid) == -1) )
    {
       my_error("getuid(): %s", strerror(errno));
       close(s);
