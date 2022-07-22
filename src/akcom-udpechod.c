@@ -984,7 +984,7 @@ my_usage(
 {
    printf("Usage: %s [options]\n", prog_name);
    printf("OPTIONS:\n");
-   printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u)\n", cnf_drop_perct);
+   printf("  -d num,  --drop=num       set packet drop probability [0-99] (default: %u%%)\n", cnf_drop_perct);
    printf("  -D usec, --delay=usec     set echo delay range to microseconds (default: %u us)\n", cnf_delay);
    printf("  -e,      --echoplus       enable echo plus, not RFC compliant%s\n", ((cnf_echoplus)) ? " (default)" : "");
    printf("  -f str,  --facility=str   set syslog facility (default: daemon)\n");
