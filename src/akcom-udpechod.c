@@ -719,7 +719,13 @@ my_daemonize(
    // record PID in pidfile
    pid = getpid();
    snprintf(buff, sizeof(buff), "%i", pid);
-   write(fd, buff, strlen(buff));
+   if (write(fd, buff, strlen(buff)) == -1)
+   {
+      close(fd);
+      unlink(cnf_pidfile);
+      my_error("write(): %s: %s", cnf_pidfile, strerror(errno));
+      return(-1);
+   };
    close(fd);
 
    // opens syslog
