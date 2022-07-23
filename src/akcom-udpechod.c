@@ -521,9 +521,11 @@ my_daemonize(
          my_error("fopen(): %s", strerror(errno));
          return(-1);
       };
+   } else if (fscanf(fs, "%i", &pid) != 1)
+   {
+      fclose(fs);
    } else
    {
-      fscanf(fs, "%i", &pid);
       fclose(fs);
       if (kill(pid, 0) == -1)
       {
