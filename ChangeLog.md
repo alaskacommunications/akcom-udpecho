@@ -7,6 +7,7 @@ All rights reserved.
 
 0.3.0
 -----
+   Released 2022/07/25
    - docs: updating README updated build information (syzdek)
    - docs: updating utility descriptions in README (syzdek)
    - akcom-udpecho: fixing misc portability issues (syzdek)
