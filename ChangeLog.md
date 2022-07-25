@@ -13,6 +13,8 @@ All rights reserved.
    - akcom-udpechod: fixing misc portability issues (syzdek)
    - autotools: removing GNU libtool from manual build (syzdek)
    - docs: adding initial man pages (syzdek)
+   * Thanks to roycewilliams (Royce Williams) and pyromiko (Miguel T.) at
+     GitHub for reporting issues.  
 
 0.2.0
 -----
