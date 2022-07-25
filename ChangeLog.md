@@ -12,6 +12,7 @@ All rights reserved.
    - akcom-udpecho: fixing misc portability issues (syzdek)
    - akcom-udpechod: fixing misc portability issues (syzdek)
    - autotools: removing GNU libtool from manual build (syzdek)
+   - docs: adding initial man pages (syzdek)
 
 0.2.0
 -----

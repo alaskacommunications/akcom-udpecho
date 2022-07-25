@@ -1,0 +1,108 @@
+.\"
+.\" Alaska Communications UDP Echo Tools
+.\" Copyright (C) 2022 Alaska Communications
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"    1. Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"    2. Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in the
+.\"       documentation and/or other materials provided with the distribution.
+.\"
+.\"    3. Neither the name of the copyright holder nor the names of its
+.\"       contributors may be used to endorse or promote products derived from
+.\"       this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+.\" IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+.\" THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.TH "AKCOM-UDPECHO" "8" "@RELEASE_MONTH@" "Alaska Communications" "Alaska Communications UDP Echo Tools"
+.SH NAME
+akcom-udpecho - a shell utility for testing UDP echo servers
+
+.SH SYNOPSIS
+\fBakcom-udpecho\fR [\fBOPTONS\fR] \fIhost\fR [\fIport\fR]
+
+.SH DESCRIPTION
+\fBakcom-udpecho\fR is a shell utility for testing UDP echo servers.
+\fBakcom-udpecho\fR supports for RFC 862 compliant servers and TR-143
+UDPEchoPlus compliant servers.  If the UDP Echo variant is not specified,
+\fBakcom-udpecho\fR will attempt to determine the variant by examining the
+\fITestRespSN\fR, \fITestRespRecvTimeStamp\fR, and \fITestRespReplyTimeStamp\fR
+ fields of the UDPEchoPlus packet for non-zero values.
+
+.SH OPTIONS
+
+.TP 14
+\fB-4\fR
+connect via IPv4 only
+
+.TP 14
+\fB-6\fR
+connect via IPv6 only
+
+.TP 14
+\fB-c\fR \fIcount\fR
+stop after sending count packets
+
+.TP 14
+\fB-d\fR, \fB--debug\fR
+print headers of received packets. Useful for troubleshooting remote
+UDPEchoPlus servers.
+
+.TP 14
+\fB-e\fR, \fB--echoplus\fR
+expect responses from a TR-143 UDPEchoPlus compliant server. The default is to
+attempt to detect UDPEchoPlus responses.
+
+.TP 14
+\fB-h\fR, \fB--help\fR
+print usage information and exit.
+
+.TP 14
+\fB-i\fR \interval\fR
+interval in seconds between sending packets (default: 1 sec)
+
+.TP 14
+\fB-r\fR, \fB--rfc\fR
+expect responses from an RFC 862 compliant server . The default is to
+attempt to detect TR-143 UDPEchoPlus responses.
+
+.TP 14
+\fB-q\fR, \fB--quiet\fR, \fB--silent\fR
+do not print messages
+
+.TP 14
+\fB-s\fR \isize\fR
+size of data bytes to be sent. The minimum data size is 40 bytes.
+
+.TP 14
+\fB-t\fR \isec\fR
+response timeout (default: 5 sec)
+
+.TP 14
+\fB-V\fR, \fB--version\fR
+print version number and exit
+
+.TP 14
+\fB-v\fR, \fB--verbose\fR
+enable verbose output
+
+.SH SEE ALSO
+.BR akcom-udpechod (8)
+
+.SH AUTHOR
+David M. Syzdek <david.syzdek@acsalaska.com>

@@ -1,0 +1,114 @@
+.\"
+.\" Alaska Communications UDP Echo Tools
+.\" Copyright (C) 2022 Alaska Communications
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"    1. Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"    2. Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in the
+.\"       documentation and/or other materials provided with the distribution.
+.\"
+.\"    3. Neither the name of the copyright holder nor the names of its
+.\"       contributors may be used to endorse or promote products derived from
+.\"       this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+.\" IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+.\" THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.TH "AKCOM-UDPECHOD" "8" "@RELEASE_MONTH@" "Alaska Communications" "Alaska Communications UDP Echo Tools"
+.SH NAME
+akcom-udpechod - a simple UDP echo server
+
+.SH SYNOPSIS
+\fBakcom-udpechod\fR [\fBOPTONS\fR]
+
+.SH DESCRIPTION
+\fBakcom-udpechod\fR is simple UDP echo server. Currently \fBakcom-udpechod\fR
+processes each packet sequentially which causes all packets received before
+previous packets have been processed to be skewed when using either the
+\fB-D\fR or \fB-d\fR options.
+
+.SH OPTIONS
+
+.TP 10
+\fB-d\fR \fInum\fR, \fB--drop\fR=\fInum\fR,
+set the packet drop probability [0-99]. This option should not be used if
+multiple clients will be using the same UDP echo server instance.
+(default: 0%)
+
+.TP 10
+\fB-D\fR \fIusec\fR, \fB--delay\fR=\fIusec\fR
+set echo delay range to microseconds. This option should not be used if
+multiple clients will be using the same UDP echo server instance.
+(default: 0 us)
+
+.TP 10
+\fB-e\fB, \fB--echoplus\fR
+run as a TR-143 UDPEchoPlus server. This option is not compatible with
+RFC 862 UDP echo clients.
+
+.TP 10
+\fB-f\fR \fIstr\fR, \fB--facility\fR=\fIstr\fR
+set syslog facility (default: daemon)
+
+.TP 10
+\fB-g\fR \fIgid\fR, \fB--group\fR=\fIgid\fR
+setgid to gid (default: none)
+
+.TP 10
+\fB-h\fR, \fB--help\fR
+print this help and exit
+
+.TP 10
+\fB-l\fR \fIaddr\fR, \fB--listen\fR=\fIaddr\fR
+bind to IP address (default: all)
+
+.TP 10
+\fB-n\fR, \fB--foreground\fR
+do not fork
+
+.TP 10
+\fB-p\fR \fIport\fR, \fB--port\fR=\fIport\fR
+list on port number (default: 30006)
+
+.TP 10
+\fB-P\fR \fIfile\fR, \fB--pidfile\fR=\fIfile\fR
+PID file (default: /var/run/akcom-udpechod.pid)
+
+.TP 10
+\fB-r\fR, \fB--rfc\fR
+run as an RFC 862 compliant echo protocol. This option may be incompatible
+with TR-143 UDPEchoPlus clients.  This option is compatible with the TR-143
+UDPEchoPlus mode of \fBakcom-udpecho\fR (8). (default)
+
+.TP 10
+\fB-u\fR \fIuid\fR,  \fB--user\fR=\fUuid\fR
+setuid to uid (default: none)
+
+.TP 10
+\fB-v\fR, \fB--verbose\fR
+enable verbose output
+
+.TP 10
+\fB-V\fR, \fB--version\fR
+print version number and exit
+
+.SH SEE ALSO
+.BR akcom-udpecho (8)
+
+.SH AUTHOR
+David M. Syzdek <david.syzdek@acsalaska.com>
