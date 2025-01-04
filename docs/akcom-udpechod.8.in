@@ -93,7 +93,7 @@ PID file (default: /var/run/akcom-udpechod.pid)
 \fB-r\fR, \fB--rfc\fR
 run as an RFC 862 compliant echo protocol. This option may be incompatible
 with TR-143 UDPEchoPlus clients.  This option is compatible with the TR-143
-UDPEchoPlus mode of \fBakcom-udpecho\fR (8). (default)
+UDPEchoPlus mode of \fBakcom-udpecho\fR (1). (default)
 
 .TP 10
 \fB-u\fR \fIuid\fR,  \fB--user\fR=\fUuid\fR
@@ -108,7 +108,7 @@ enable verbose output
 print version number and exit
 
 .SH SEE ALSO
-.BR akcom-udpecho (8)
+.BR akcom-udpecho (1)
 
 .SH AUTHOR
 David M. Syzdek <david.syzdek@acsalaska.com>

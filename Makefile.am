@@ -72,7 +72,7 @@ lib_LIBRARIES				=
 lib_LTLIBRARIES				=
 EXTRA_LIBRARIES				=
 EXTRA_LTLIBRARIES			=
-man_MANS				= docs/akcom-udpecho.8 \
+man_MANS				= docs/akcom-udpecho.1 \
 					  docs/akcom-udpechod.8
 noinst_HEADERS				=
 noinst_PROGRAMS				=
@@ -86,7 +86,7 @@ TESTS					=
 XFAIL_TESTS				=
 EXTRA_MANS				=
 EXTRA_DIST				= $(noinst_HEADERS) \
-					  docs/akcom-udpecho.8.in \
+					  docs/akcom-udpecho.1.in \
 					  docs/akcom-udpechod.8.in \
 					  docs/TR-143.pdf \
 					  docs/rfc862.txt \
@@ -132,7 +132,7 @@ include contrib/bindletools/build-aux/makefile-version.am
 # custom targets
 .PHONY:
 
-docs/akcom-udpecho.8: Makefile $(srcdir)/docs/akcom-udpecho.8.in
+docs/akcom-udpecho.1: Makefile $(srcdir)/docs/akcom-udpecho.1.in
 	@$(do_subst_dt)
 
 
