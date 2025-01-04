@@ -141,16 +141,16 @@ _akcom-udpechod_ usage:
 
       Usage: akcom-udpechod [options]
       OPTIONS:
-        -d num,  --drop=num       set packet drop probability [0-99] (default: 0%)
-        -D usec, --delay=usec     set echo delay range to microseconds (default: 0 us)
+        -d num,  --drop num       set packet drop probability [0-99] (default: 0%)
+        -D usec, --delay usec     set echo delay range to microseconds (default: 0 us)
         -e,      --echoplus       enable echo plus, not RFC compliant
-        -f str,  --facility=str   set syslog facility (default: daemon)
-        -g gid,  --group=gid      setgid to gid (default: none)
+        -f str,  --facility str   set syslog facility (default: daemon)
+        -g gid,  --group gid      setgid to gid (default: none)
         -h,      --help           print this help and exit
-        -l addr, --listen=addr    bind to IP address (default: all)
+        -l addr, --listen addr    bind to IP address (default: all)
         -n,      --foreground     do not fork
-        -p port, --port=port      list on port number (default: 30006)
-        -P file, --pidfile=file   PID file (default: /var/run/akcom-udpechod.pid)
+        -p port, --port port      list on port number (default: 30006)
+        -P file, --pidfile file   PID file (default: /var/run/akcom-udpechod.pid)
         -r,      --rfc            RFC compliant echo protocol (default)
         -u uid,  --user=uid       setuid to uid (default: none)
         -v,      --verbose        enable verbose output
@@ -159,8 +159,8 @@ _akcom-udpechod_ usage:
 Example usage (RFC 862 compliant):
 
       akcom-udpechod \
-         --port 30007 \
-         --pidfile /var/run/akcom-udpecho/akcom-udpecho.pid \
+         --port 30006 \
+         --pidfile /var/run/akcom-udpecho.pid \
          --user nobody \
          --group nobody \
          --delay=10000 \
@@ -170,9 +170,8 @@ Example usage (RFC 862 compliant):
 Example usage (TR-143 UDPEchoPlus compliant):
 
       akcom-udpechod \
-         --port 30007 \
-         --pidfile /var/run/akcom-udpecho/akcom-udpecho.pid \
-         --echoplus \
+         --port 30006 \
+         --pidfile /var/run/akcom-udpecho.pid \
          --user nobody \
          --group nobody \
          --delay=10000 \
