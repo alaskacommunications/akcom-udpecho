@@ -547,6 +547,7 @@ my_loop(
       stats_rcvd++;
 
       // performs stats on packet
+      clock_gettime(CLOCK_MONOTONIC_RAW, &now);
       pckt_time      = my_timespec_delta(&now, &rcvbuff->send_time, NULL);
       pckt_delay     = rcvbuff->reply_time - rcvbuff->recv_time;
       pckt_time_adj  = pckt_time - pckt_delay;
