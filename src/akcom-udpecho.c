@@ -550,7 +550,9 @@ my_loop(
       clock_gettime(CLOCK_MONOTONIC_RAW, &now);
       pckt_time      = my_timespec_delta(&now, &rcvbuff->send_time, NULL);
       pckt_delay     = rcvbuff->reply_time - rcvbuff->recv_time;
-      pckt_time_adj  = pckt_time - pckt_delay;
+      pckt_time_adj  = (pckt_time > pckt_delay)
+                     ? (pckt_time - pckt_delay)
+                     : pckt_time;
       stats_avg      += pckt_time;
       stats_avg_adj  += pckt_time_adj;
       stats_min      = ( (!(stats_min)) || (pckt_time < stats_min) ) ? pckt_time : stats_min;
