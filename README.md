@@ -251,6 +251,7 @@ New Release Checklist:
 
    - Switch to 'master' branch in Git repository.
    - Update version in configure.ac.
+   - Update version in akcom-udpecho.spec
    - Update version in GNUmakefile.version.
    - Update date and version in ChangeLog.
    - Commit configure.ac and ChangeLog changes to repository.
