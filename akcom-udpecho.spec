@@ -1,10 +1,10 @@
 Name:      akcom-udpecho
 Summary:   UDP echo server/client with support for TR-143 UDPEchoPlus
-Version:   0.3
+Version:   0.5
 Release:   1%{?dist}
 License:   Alaska Communications UDP Echo Tools License
 Group:     System Environment/Daemons
-URL:       https://github.com/alaskacommunications/akcom-udpecho/releases/download/v0.3/akcom-udpecho-0.3.0.tar.gz
+URL:       https://github.com/alaskacommunications/akcom-udpecho/releases/download/v0.5/akcom-udpecho-0.5.0.tar.gz
 Source0:   %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: make gcc which libtool autoconf automake file diffutils gzip git

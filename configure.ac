@@ -42,7 +42,7 @@ AC_PREREQ(2.65)
 
 AC_COPYRIGHT([Copyright (C) 2020, 2022, 2025 Alaska Communications])
 AC_REVISION(0.1)
-AC_INIT([Alaska Communications UDP Echo Tools],[0.4],[david.syzdek@acsalaska.com],[akcom-udpecho])
+AC_INIT([Alaska Communications UDP Echo Tools],[0.5],[david.syzdek@acsalaska.com],[akcom-udpecho])
 
 
 AC_SUBST([RELEASE_MONTH],["January 2025"])
