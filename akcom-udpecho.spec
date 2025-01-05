@@ -9,7 +9,7 @@ Source0:   %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: make gcc which libtool autoconf automake file diffutils gzip git
 
-%description 
+%description
 This package contains a UDP echo server and client. Both the client and
 the server support RFC 862 (default) and support TR-143 UDPEchoPlus if
 passed the --echoplus flag.
