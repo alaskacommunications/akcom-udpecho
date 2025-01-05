@@ -86,6 +86,7 @@ TESTS					=
 XFAIL_TESTS				=
 EXTRA_MANS				=
 EXTRA_DIST				= $(noinst_HEADERS) \
+					  akcom-udpecho.spec \
 					  docs/akcom-udpecho.1.in \
 					  docs/akcom-udpechod.8.in \
 					  docs/TR-143.pdf \
