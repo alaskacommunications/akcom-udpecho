@@ -188,7 +188,7 @@ To build the package using a source tarball, run the following:
       mkdir -p akcom-udpecho-x.y.z/build
       cd akcom-udpecho-x.y.z/build
       ../configure
-      make
+      make all
       make install
    
 For additional configuration options, run:
@@ -223,12 +223,12 @@ Preparing and compiling source using GNU autotools method:
       $ cd akcom-udpecho/build
       $ ../autogen.sh
       $ ../configure
-      $ make && make install
+      $ make all && make install
 
 Compiling source using basic method:
 
       $ cd akcom-udpecho/src
-      $ make && make install
+      $ make all && make install
 
 For more information on building and installing using configure, please
 read the INSTALL file.
