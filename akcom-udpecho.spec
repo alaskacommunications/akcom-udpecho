@@ -1,50 +1,66 @@
-Name:      akcom-udpecho
-Summary:   UDP echo server/client with support for TR-143 UDPEchoPlus
-Version:   0.5
-Release:   1%{?dist}
-License:   Alaska Communications UDP Echo Tools License
-Group:     System Environment/Daemons
-URL:       https://github.com/alaskacommunications/akcom-udpecho/releases/download/v0.5/akcom-udpecho-0.5.0.tar.gz
-Source0:   %{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: make gcc which libtool autoconf automake file diffutils gzip git
+%global debug_package %{nil}
+
+Name: akcom-udpecho
+Summary: UDP echo server/client with support for TR-143 UDPEchoPlus
+Version: 0.5.0
+Release: 1%{?dist}
+License: Modified BSD License
+Url: https://github.com/alaskacommunications/akcom-udpecho/
+Source0: https://github.com/alaskacommunications/akcom-udpecho/releases/download/v0.5/akcom-udpecho-0.5.0.tar.xz
+Group: System Environment/Daemons
+
+Requires: glibc
+BuildRequires: glibc-devel make gcc which libtool autoconf automake file diffutils gzip xz
+
 
 %description
-This package contains a UDP echo server and client. Both the client and
-the server support RFC 862 (default) and support TR-143 UDPEchoPlus if
-passed the --echoplus flag.
+akcom-udpecho is a shell utility for testing UDP echo servers. akcom-udpecho
+supports for RFC 862 compliant servers and TR-143 UDPEchoPlus compliant
+servers.  If the UDP Echo variant is not specified, akcom-udpecho will
+attempt to determine the variant by examining the TestRespSN,
+TestRespRecvTimeStamp, and TestRespReplyTimeStamp fields of the UDPEchoPlus
+packet for non-zero values.
+
 
 %prep
 %setup -q
 
+
 %build
-echo "build"
-cd src
-make all-progs PREFIX=%{_prefix}
-#gzip ./docs/akcom-udpecho.1
-#gzip ./docs/akcom-udpechod.8
-find
+%configure \
+   --prefix=/usr \
+   --mandir=/usr/share/man \
+   --docdir=/usr/share/doc/securecoreutils-%{version} \
+   CPPFLAGS=-Wno-unknown-pragmas
+
+%{__make} %{?_smp_mflags}
+
+strip src/akcom-udpecho
+strip src/akcom-udpechod
+
 
 %install
-echo "install"
-cd src
-find
-rm -rf $RPM_BUILD_ROOT
-#mkdir -p $RPM_BUILD_ROOT%{_bindir}/
-#mkdir -p $RPM_BUILD_ROOT%{_sbindir}/
-#mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1/
-#mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8/
-make install-progs DESTDIR=$RPM_BUILD_ROOT PREFIX=%{_prefix}
-#find $RPM_BUILD_ROOT
+%{__make} DESTDIR=%{buildroot} install
+
 
 %files
-%defattr(0644,root,root,-)
-%attr(0755,root,root) %{_bindir}/akcom-udpecho
-%attr(0755,root,root) %{_sbindir}/akcom-udpechod
-#%attr(0755,root,root) %{_mandir}/man1/akcom-udpecho.1.gz
-#%attr(0755,root,root) %{_mandir}/man8/akcom-udpechod.8.gz
+%attr(0755,root,root) /usr/bin/akcom-udpecho
+%attr(0755,root,root) /usr/bin/akcom-udpechod
+%attr(0644,root,root) /usr/share/man/man1/akcom-udpecho.1.gz
+%attr(0644,root,root) /usr/share/man/man8/akcom-udpechod.8.gz
 
-%clean
-rm -rf $RPM_BUILD_ROOT
+
+%pre
+
+
+%post
+
+
+%preun
+
+
+%check
+%{__make} check
+
 
 %changelog
