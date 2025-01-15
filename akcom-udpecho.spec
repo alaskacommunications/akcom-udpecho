@@ -2,7 +2,7 @@
 
 Name: akcom-udpecho
 Summary: UDP echo server/client with support for TR-143 UDPEchoPlus
-Version: 0.5.0
+Version: 0.6.0
 Release: 1%{?dist}
 License: Modified BSD License
 Url: https://github.com/alaskacommunications/akcom-udpecho/

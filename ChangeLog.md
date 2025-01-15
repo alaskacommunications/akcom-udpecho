@@ -5,6 +5,12 @@ Alaska Communications UDP Echo Tools
 Copyright (C) 2020, 2025 Alaska Communications
 All rights reserved.
 
+0.6.0
+-----
+   Released 2025/01/14
+   - docs: updating README (syzdek)
+   - build: switching to Rocky Linux 9 SPEC file used by Alaska Communucations
+
 0.5.0
 -----
    Released 2025/01/04
